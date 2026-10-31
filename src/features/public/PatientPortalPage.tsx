@@ -5,8 +5,9 @@ import {
   CalendarDaysIcon,
   ClockIcon,
   IdentificationIcon,
+  LockClosedIcon,
 } from '@heroicons/react/24/outline';
-import { Badge, Button, Callout, Field, Input, Spinner } from '@/components/common';
+import { Badge, Button, Callout, Field, Input, Logo, Spinner } from '@/components/common';
 import {
   errorMessage,
   portalToken,
@@ -274,59 +275,90 @@ function PortalLogin({
   const ready = identifier.trim().length >= 3 && dob !== '';
 
   return (
-    <div className="mx-auto max-w-md px-4 py-14">
-      <h1 className="text-[1.75rem] tracking-[-0.02em]">Patient login</h1>
-      <p className="mt-1.5 text-[0.9375rem] text-muted">
-        See your appointments and book another.
-      </p>
+    <div className="mx-auto flex min-h-[calc(100vh-4rem)] w-full max-w-[26rem] flex-col justify-center px-4 py-12">
+      <div className="mb-7 text-center">
+        <span className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] shadow-xs">
+          <Logo size={28} />
+        </span>
+        <h1 className="text-[1.5rem] tracking-[-0.02em]">Patient portal</h1>
+        <p className="mt-1.5 text-[0.875rem] text-muted">
+          Sign in to see your appointments and book another.
+        </p>
+      </div>
 
       {expired && (
-        <Callout tone="warning" className="mt-6">
+        <Callout tone="warning" className="mb-4">
           Your session timed out. Please sign in again.
         </Callout>
       )}
       {error && (
-        <Callout tone="danger" className="mt-6">
+        <Callout tone="danger" className="mb-4">
           {error}
         </Callout>
       )}
 
-      <form onSubmit={submit} className="mt-6 space-y-4">
-        <Field
-          label="Patient ID or phone number"
-          required
-          hint="Your patient ID looks like PAT-20260130-0007."
-        >
-          <Input
-            value={identifier}
-            onChange={(e) => setIdentifier(e.target.value)}
-            placeholder="PAT-… or 98765 43210"
-            autoComplete="off"
-            autoFocus
-          />
-        </Field>
+      {/* The form sits on its own sheet rather than loose on the page. Two
+          fields floating in the middle of a wide column read as unfinished,
+          and on a sign-in screen that is the wrong thing to feel about the
+          place holding your medical record. */}
+      <div className="rounded-[14px] border border-[var(--color-border)] bg-[var(--color-surface)] p-6 shadow-sm">
+        <form onSubmit={submit} className="space-y-4" noValidate>
+          <Field
+            label="Patient ID or phone number"
+            required
+            hint="Your patient ID looks like PAT-20260130-0007."
+          >
+            <Input
+              value={identifier}
+              onChange={(e) => setIdentifier(e.target.value)}
+              placeholder="PAT-… or 98765 43210"
+              autoComplete="username"
+              autoFocus
+              // Phone numbers are the common case on a handset, and the
+              // patient ID is still typeable on the numeric pad's letter row.
+              inputMode="text"
+              disabled={busy}
+            />
+          </Field>
 
-        <Field
-          label="Date of birth"
-          required
-          hint="We ask for this so nobody else can open your record with just a phone number."
-        >
-          <Input type="date" value={dob} onChange={(e) => setDob(e.target.value)} />
-        </Field>
+          <Field
+            label="Date of birth"
+            required
+            hint="We ask for this so nobody else can open your record with just a phone number."
+          >
+            <Input
+              type="date"
+              value={dob}
+              onChange={(e) => setDob(e.target.value)}
+              autoComplete="bday"
+              // A date of birth in the future is never a typo worth sending.
+              max={new Date().toISOString().slice(0, 10)}
+              disabled={busy}
+            />
+          </Field>
 
-        <Button type="submit" className="w-full" disabled={!ready || busy}>
-          {busy ? 'Checking…' : 'Sign in'}
-        </Button>
-      </form>
+          {/* `loading` rather than swapping the label to "Checking…": the
+              button keeps its width, so the form does not jump while the
+              request is in flight. */}
+          <Button type="submit" size="lg" fullWidth loading={busy} disabled={!ready}>
+            Sign in
+          </Button>
+        </form>
+      </div>
 
-      <p className="mt-6 text-center text-[0.875rem] text-muted">
+      <p className="mt-5 text-center text-[0.875rem] text-muted">
         Never been here before?{' '}
-        <Link to="/book" className="font-semibold" style={{ color: 'var(--color-primary)' }}>
+        <Link
+          to="/book"
+          className="font-[620] underline-offset-2 hover:underline"
+          style={{ color: 'var(--color-primary)' }}
+        >
           Book as a new patient
         </Link>
       </p>
 
-      <p className="mt-8 text-center text-[0.75rem] leading-relaxed text-faint">
+      <p className="mt-6 flex items-center justify-center gap-1.5 text-center text-[0.75rem] leading-relaxed text-faint">
+        <LockClosedIcon className="h-3.5 w-3.5 shrink-0" aria-hidden />
         Your session lasts two hours and is not kept after you close the browser.
       </p>
     </div>

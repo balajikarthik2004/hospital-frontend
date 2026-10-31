@@ -158,5 +158,38 @@ export interface PortalAppointment {
   } | null;
 }
 
+/* ── The booking assistant ────────────────────────────────────────────────
+   Mirrors `AgentReply` in server/src/services/bookingAgent.ts. The whole
+   conversation is server-driven: `state` is opaque to us and handed straight
+   back on the next turn, and the client decides nothing about the flow — it
+   renders what it is told. Keep these in step with the server if the agent
+   grows a step. */
+
+export interface AgentOption {
+  label: string;
+  value: string;
+  /** Rendered quieter — used for "something else" style escapes. */
+  subtle?: boolean;
+}
+
+export interface AgentReply {
+  /** Opaque conversation state. Echo it back untouched on the next turn. */
+  state: Record<string, unknown> & { step: string };
+  /** Several short bubbles read better than one wall of text. */
+  say: string[];
+  options?: AgentOption[];
+  input?: { type: 'text' | 'tel' | 'date'; placeholder: string } | null;
+  booking?: {
+    appointmentId: string;
+    patientId: string;
+    isNew: boolean;
+    doctorName: string;
+    department: string;
+    date: string;
+    time: string;
+  };
+  emergency?: { advice: string };
+}
+
 export const doctorName = (d: Pick<PublicDoctor, 'firstName' | 'lastName'>) =>
   `Dr ${d.firstName} ${d.lastName}`;
