@@ -417,8 +417,10 @@ export function NextActions({ data }: { data: any }) {
                 </span>
 
                 {action.href && (
-                  <span className="flex shrink-0 items-center gap-1.5 rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] px-3 py-1.5 text-xs font-semibold text-[var(--color-primary)] shadow-xs transition-all group-hover:border-primary-400 group-hover:bg-primary-50 dark:group-hover:bg-primary-950">
-                    <span>{action.cta}</span>
+                  // The whole row is the link, so on a phone the pill shrinks to
+                  // a chevron and gives its width back to the title.
+                  <span className="flex shrink-0 items-center gap-1.5 rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] p-1.5 text-xs font-semibold text-[var(--color-primary)] shadow-xs transition-all group-hover:border-primary-400 group-hover:bg-primary-50 sm:px-3 dark:group-hover:bg-primary-950">
+                    <span className="hidden sm:inline">{action.cta}</span>
                     <ChevronRightIcon className="h-3.5 w-3.5 stroke-[2.5] transition-transform group-hover:translate-x-0.5" />
                   </span>
                 )}
@@ -544,16 +546,18 @@ export function WorkflowStrip({ variant = 'staff' }: { variant?: 'staff' | 'pati
         </button>
       </div>
 
+      {/* On a phone the steps scroll sideways rather than stacking, so the
+          work that actually needs doing is not pushed a full screen down. */}
       <ol
         className={cn(
-          'stagger mt-4 grid gap-px border-t border-[var(--color-border)] bg-[var(--color-border)]',
+          'stagger mt-4 flex snap-x snap-mandatory gap-px overflow-x-auto border-t border-[var(--color-border)] bg-[var(--color-border)] [scrollbar-width:none] sm:grid sm:overflow-visible',
           isPatient ? 'sm:grid-cols-2 lg:grid-cols-4' : 'sm:grid-cols-3 lg:grid-cols-5'
         )}
       >
         {steps.map((step, i) => (
           <li
             key={step.label}
-            className="group relative bg-[var(--color-surface)] p-5 transition-colors hover:bg-[var(--color-surface-muted)]"
+            className="group relative min-w-[68%] snap-start bg-[var(--color-surface)] p-4 transition-colors hover:bg-[var(--color-surface-muted)] sm:min-w-0 sm:p-5"
             style={{ ['--i' as string]: i }}
           >
             <div className="flex items-center justify-between">

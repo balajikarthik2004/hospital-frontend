@@ -5,6 +5,7 @@ import {
   PhoneIcon,
   XMarkIcon,
 } from '@heroicons/react/24/outline';
+import { useLocation } from 'react-router-dom';
 import { Logo, Spinner } from '@/components/common';
 import { publicApi, errorMessage, type AgentOption, type AgentReply } from '@/lib/publicApi';
 import { cn } from '@/lib/utils';
@@ -75,6 +76,9 @@ function save(value: Persisted | null) {
 }
 
 export function BookingChat() {
+  // The booking page is already the booking flow; a second way in, floating
+  // over its symptom chips, only gets in the way.
+  const onBookingPage = useLocation().pathname.startsWith('/book');
   const [open, setOpen] = useState(false);
   const [booted, setBooted] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -210,7 +214,7 @@ export function BookingChat() {
 
   return (
     <>
-      {!open && (
+      {!open && !onBookingPage && (
         <button
           ref={launcherRef}
           onClick={() => setOpen(true)}

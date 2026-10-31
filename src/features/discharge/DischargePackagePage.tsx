@@ -142,7 +142,14 @@ export function DischargePackagePage() {
                 {pkg.completedAt
                   ? fmtDateTime(pkg.completedAt)
                   : admission?.bed
-                    ? `${admission.bed.ward} · ${admission.bed.roomNumber}-${admission.bed.bedNumber}`
+                    ? (
+                        <span className="block whitespace-normal leading-snug">
+                          {admission.bed.ward}{' '}
+                          <span className="whitespace-nowrap text-muted">
+                            · {admission.bed.roomNumber}-{admission.bed.bedNumber}
+                          </span>
+                        </span>
+                      )
                     : '—'}
               </KeyValue>
             </dl>

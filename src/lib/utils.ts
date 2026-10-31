@@ -16,6 +16,12 @@ export const fmtDateTime = (v?: string | Date | null) =>
 export const fmtTime = (v?: string | Date | null) => (v ? format(toDate(v), 'HH:mm') : '—');
 export const fmtShort = (v?: string | Date | null) => (v ? format(toDate(v), 'd MMM') : '—');
 
+/**
+ * yyyy-MM-dd in the viewer's own timezone. `toISOString().slice(0, 10)` is
+ * UTC, which east of Greenwich turns local midnight into the day before.
+ */
+export const localDateKey = (v: string | Date = new Date()) => format(toDate(v), 'yyyy-MM-dd');
+
 export function fmtRelative(v?: string | Date | null): string {
   if (!v) return '—';
   return formatDistanceToNow(toDate(v), { addSuffix: true });

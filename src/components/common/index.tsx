@@ -871,14 +871,22 @@ export function EmptyState({
   detail,
   action,
   icon,
+  compact = false,
 }: {
   title: string;
   detail?: string;
   action?: ReactNode;
   icon?: ReactNode;
+  /** For an empty card inside a dashboard grid, where py-16 leaves a hole. */
+  compact?: boolean;
 }) {
   return (
-    <div className="flex flex-col items-center justify-center gap-2 px-6 py-16 text-center">
+    <div
+      className={cn(
+        'flex flex-col items-center justify-center gap-2 px-6 text-center',
+        compact ? 'py-8' : 'py-16'
+      )}
+    >
       {icon && (
         <div
           className="mb-2 flex h-12 w-12 items-center justify-center rounded-xl border border-[var(--color-border)] bg-[var(--color-surface-muted)] text-[var(--color-text-tertiary)]"

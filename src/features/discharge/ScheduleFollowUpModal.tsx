@@ -3,7 +3,7 @@ import { Button, ErrorState, Field, Input, Modal, Select, Spinner } from '@/comp
 import { api } from '@/lib/api';
 import { useApi, useMutation } from '@/hooks/useApi';
 import { toast } from '@/store/notificationStore';
-import { cn } from '@/lib/utils';
+import { cn, localDateKey } from '@/lib/utils';
 import type { FollowUpRecommendation, User } from '@/types';
 
 export function ScheduleFollowUpModal({
@@ -38,7 +38,7 @@ export function ScheduleFollowUpModal({
     if (!recommendation) return;
     const due = new Date();
     due.setDate(due.getDate() + (recommendation.dueInDays || 7));
-    setDate(due.toISOString().slice(0, 10));
+    setDate(localDateKey(due));
     setLocation(recommendation.specialty ? `${recommendation.specialty} Clinic` : '');
     setTime('');
   }, [recommendation]);
@@ -112,7 +112,7 @@ export function ScheduleFollowUpModal({
           <Input
             type="date"
             value={date}
-            min={new Date().toISOString().slice(0, 10)}
+            min={localDateKey()}
             onChange={(e) => {
               setDate(e.target.value);
               setTime('');

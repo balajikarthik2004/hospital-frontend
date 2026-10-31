@@ -275,9 +275,9 @@ function PhysicianDashboard({ data }: { data: any }) {
           xKey="date"
           area
           series={[
-            { key: 'admissions', label: 'Admissions', color: '#0891B2' },
-            { key: 'discharges', label: 'Discharges', color: '#059669' },
-            { key: 'aiPackages', label: 'AI packages started', color: '#6366F1' },
+            { key: 'admissions', label: 'Admissions', color: '#3C5E93' },
+            { key: 'discharges', label: 'Discharges', color: '#1E7B6B' },
+            { key: 'aiPackages', label: 'AI packages started', color: '#7B4FA8' },
           ]}
         />
       )}
@@ -694,14 +694,14 @@ function AdminDashboard({ data }: { data: any }) {
           title="Preparation time saved"
           subtitle="Against the 3.2 h manual baseline"
           value={k.timeSavedPct ?? 0}
-          color="#059669"
+          color="#1E7B6B"
           caption={`${(k.avgPrepHours ?? 0).toFixed(1)} h average with the agents`}
         />
         <GaugeCard
           title="Bed occupancy"
           subtitle="Hospital-wide"
           value={k.bedOccupancyPct ?? 0}
-          color="#0891B2"
+          color="#3C5E93"
           caption={`${k.activeAdmissions} active admissions`}
         />
       </div>
@@ -714,8 +714,8 @@ function AdminDashboard({ data }: { data: any }) {
           xKey="date"
           area
           series={[
-            { key: 'admissions', label: 'Admissions', color: '#0891B2' },
-            { key: 'discharges', label: 'Discharges', color: '#059669' },
+            { key: 'admissions', label: 'Admissions', color: '#3C5E93' },
+            { key: 'discharges', label: 'Discharges', color: '#1E7B6B' },
           ]}
         />
         <BarCard
@@ -726,10 +726,10 @@ function AdminDashboard({ data }: { data: any }) {
           horizontal
           stacked
           series={[
-            { key: 'occupied', label: 'Occupied', color: '#0891B2' },
-            { key: 'available', label: 'Available', color: '#059669' },
+            { key: 'occupied', label: 'Occupied', color: '#3C5E93' },
+            { key: 'available', label: 'Available', color: '#1E7B6B' },
             { key: 'reserved', label: 'Reserved', color: '#D97706' },
-            { key: 'maintenance', label: 'Maintenance', color: '#94A3B8' },
+            { key: 'maintenance', label: 'Maintenance', color: '#B0ACA3' },
           ]}
         />
       </div>
@@ -742,7 +742,7 @@ function AdminDashboard({ data }: { data: any }) {
           xKey="agent"
           horizontal
           suffix="%"
-          series={[{ key: 'acceptedPct', label: 'Accepted', color: '#059669' }]}
+          series={[{ key: 'acceptedPct', label: 'Accepted', color: '#1E7B6B' }]}
         />
         <Card>
           <CardHeader title="Clinician workload" subtitle="Active inpatients per attending" />

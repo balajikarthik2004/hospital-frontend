@@ -1,5 +1,15 @@
 import { useState } from 'react';
 import {
+  ArrowPathIcon,
+  BuildingOffice2Icon,
+  CalendarDaysIcon,
+  ClockIcon,
+  DocumentMagnifyingGlassIcon,
+  HandRaisedIcon,
+  InboxStackIcon,
+  UserGroupIcon,
+} from '@heroicons/react/24/outline';
+import {
   Badge,
   Card,
   CardHeader,
@@ -73,19 +83,23 @@ export function AnalyticsPage() {
               label="Bed occupancy"
               value={pct(k.bedOccupancyPct ?? 0)}
               hint={`${k.bedsOccupied}/${k.bedsTotal} beds`}
+              icon={<BuildingOffice2Icon />}
             />
             <KpiCard
               label="Active admissions"
               value={k.activeAdmissions ?? 0}
               hint={`${k.totalPatients} patients on file`}
               tone="info"
+              icon={<UserGroupIcon />}
             />
             <KpiCard
               label="Avg preparation time"
               value={(k.avgPrepHours ?? 0).toFixed(1)}
               unit="h"
               hint={`vs ${k.baselinePrepHours} h manual baseline`}
-              tone="success"
+              // Green only when it actually beats the manual baseline.
+              tone={(k.avgPrepHours ?? 0) <= (k.baselinePrepHours ?? 0) ? 'success' : 'warning'}
+              icon={<ClockIcon />}
               delta={k.timeSavedPct ? { value: k.timeSavedPct, goodWhen: 'up' } : undefined}
             />
             <KpiCard
@@ -93,6 +107,7 @@ export function AnalyticsPage() {
               value={k.packagesPendingReview ?? 0}
               hint={`${k.packagesCompleted} completed to date`}
               tone="warning"
+              icon={<InboxStackIcon />}
             />
           </div>
 
@@ -103,9 +118,9 @@ export function AnalyticsPage() {
             xKey="date"
             area
             series={[
-              { key: 'admissions', label: 'Admissions', color: '#0891B2' },
-              { key: 'discharges', label: 'Discharges', color: '#059669' },
-              { key: 'aiPackages', label: 'AI packages', color: '#6366F1' },
+              { key: 'admissions', label: 'Admissions', color: '#3C5E93' },
+              { key: 'discharges', label: 'Discharges', color: '#1E7B6B' },
+              { key: 'aiPackages', label: 'AI packages', color: '#7B4FA8' },
             ]}
           />
 
@@ -116,7 +131,7 @@ export function AnalyticsPage() {
               value={k.avgPrepHours ?? 0}
               max={4}
               unit=" h"
-              color="#059669"
+              color="#1E7B6B"
               caption={
                 k.timeSavedPct
                   ? `${pct(k.timeSavedPct)} faster than preparing it by hand`
@@ -132,7 +147,7 @@ export function AnalyticsPage() {
               title="Follow-up compliance"
               subtitle="Appointments confirmed or attended"
               value={k.followUpComplianceRatePct ?? 0}
-              color="#0891B2"
+              color="#3C5E93"
             />
           </div>
 
@@ -144,10 +159,10 @@ export function AnalyticsPage() {
               horizontal
               stacked
               series={[
-                { key: 'occupied', label: 'Occupied', color: '#0891B2' },
-                { key: 'available', label: 'Available', color: '#059669' },
+                { key: 'occupied', label: 'Occupied', color: '#3C5E93' },
+                { key: 'available', label: 'Available', color: '#1E7B6B' },
                 { key: 'reserved', label: 'Reserved', color: '#D97706' },
-                { key: 'maintenance', label: 'Maintenance', color: '#94A3B8' },
+                { key: 'maintenance', label: 'Maintenance', color: '#B0ACA3' },
               ]}
             />
             <Card padded={false}>
@@ -196,23 +211,27 @@ export function AnalyticsPage() {
               value={pct(agents.data?.detectionRatePct ?? 0)}
               hint="Packages where at least one flag was raised"
               tone="primary"
+              icon={<DocumentMagnifyingGlassIcon />}
             />
             <KpiCard
               label="False positive rate"
               value={pct(agents.data?.falsePositiveRatePct ?? 0)}
               hint="Resolved flags that clinicians dismissed"
               tone={(agents.data?.falsePositiveRatePct ?? 0) > 25 ? 'warning' : 'success'}
+              icon={<HandRaisedIcon />}
             />
             <KpiCard
               label="30-day readmission"
               value={pct(readmission.data?.overallPct ?? 0)}
               hint={`${readmission.data?.readmissions ?? 0} of ${readmission.data?.eligibleDischarges ?? 0} discharges`}
               tone={(readmission.data?.overallPct ?? 0) > 15 ? 'danger' : 'success'}
+              icon={<ArrowPathIcon />}
             />
             <KpiCard
               label="Follow-up compliance"
               value={pct(k.followUpComplianceRatePct ?? 0)}
               tone="info"
+              icon={<CalendarDaysIcon />}
             />
           </div>
 
@@ -232,9 +251,9 @@ export function AnalyticsPage() {
               xKey="severity"
               stacked
               series={[
-                { key: 'accepted', label: 'Accepted', color: '#059669' },
-                { key: 'modified', label: 'Modified', color: '#0891B2' },
-                { key: 'dismissed', label: 'Dismissed', color: '#94A3B8' },
+                { key: 'accepted', label: 'Accepted', color: '#1E7B6B' },
+                { key: 'modified', label: 'Modified', color: '#3C5E93' },
+                { key: 'dismissed', label: 'Dismissed', color: '#B0ACA3' },
                 { key: 'pending', label: 'Still open', color: '#D97706' },
               ]}
             />
@@ -250,7 +269,7 @@ export function AnalyticsPage() {
               }))}
               xKey="type"
               horizontal
-              series={[{ key: 'count', label: 'Findings', color: '#7C3AED' }]}
+              series={[{ key: 'count', label: 'Findings', color: '#7B4FA8' }]}
             />
             <Card padded={false}>
               <div className="p-5 pb-0">
@@ -349,7 +368,7 @@ export function AnalyticsPage() {
               stacked
               suffix="%"
               series={[
-                { key: 'acceptedPct', label: 'Accepted', color: '#059669' },
+                { key: 'acceptedPct', label: 'Accepted', color: '#1E7B6B' },
                 { key: 'editedPct', label: 'Edited', color: '#D97706' },
                 { key: 'rejectedPct', label: 'Rejected', color: '#DC2626' },
               ]}
@@ -359,7 +378,7 @@ export function AnalyticsPage() {
               subtitle="Completed packages only"
               data={agents.data?.completionHistogram ?? []}
               xKey="bucket"
-              series={[{ key: 'count', label: 'Packages', color: '#6366F1' }]}
+              series={[{ key: 'count', label: 'Packages', color: '#7B4FA8' }]}
             />
           </div>
 
