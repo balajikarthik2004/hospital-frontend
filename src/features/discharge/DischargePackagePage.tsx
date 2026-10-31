@@ -102,7 +102,7 @@ export function DischargePackagePage() {
   return (
     <>
       <Link
-        to="/discharge"
+        to="/app/discharge"
         className="mb-4 inline-flex items-center gap-1.5 text-xs font-medium text-muted transition-colors hover:text-[var(--color-primary)]"
       >
         <ArrowLeftIcon className="h-3.5 w-3.5" />
@@ -128,7 +128,7 @@ export function DischargePackagePage() {
             <dl className="mt-4 grid grid-cols-2 gap-x-6 gap-y-3 sm:grid-cols-4">
               <KeyValue label="Patient ID">
                 <Link
-                  to={`/patients/${patient?._id}`}
+                  to={`/app/patients/${patient?._id}`}
                   className="font-mono text-[0.8125rem] text-[var(--color-primary)] hover:underline"
                 >
                   {patient?.patientId ?? '—'}

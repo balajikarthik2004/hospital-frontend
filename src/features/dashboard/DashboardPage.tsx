@@ -141,7 +141,7 @@ function PhysicianDashboard({ data }: { data: any }) {
             title="My active patients"
             subtitle="Patients where you are the attending physician"
             action={
-              <Link to="/patients">
+              <Link to="/app/patients">
                 <Button size="sm" variant="ghost" icon={<ArrowRightIcon className="h-4 w-4" />}>
                   All patients
                 </Button>
@@ -174,7 +174,7 @@ function PhysicianDashboard({ data }: { data: any }) {
                     <Tr key={a._id}>
                       <Td>
                         <Link
-                          to={`/patients/${patient._id}`}
+                          to={`/app/patients/${patient._id}`}
                           className="font-medium text-primary-700 hover:underline"
                         >
                           {patientName(patient)}
@@ -214,7 +214,7 @@ function PhysicianDashboard({ data }: { data: any }) {
                 {packages.slice(0, 5).map((p) => (
                   <li key={p._id}>
                     <Link
-                      to={`/discharge/${p._id}`}
+                      to={`/app/discharge/${p._id}`}
                       className="block rounded-lg border p-3 transition-colors hover:border-primary-600 hover:bg-[var(--color-primary-50)]"
                       style={{ borderColor: 'var(--color-border)' }}
                     >
@@ -341,7 +341,7 @@ function NurseDashboard({ data }: { data: any }) {
                   <Tr key={String(v.admissionId)}>
                     <Td>
                       <Link
-                        to={`/patients/${v.patient?._id}`}
+                        to={`/app/patients/${v.patient?._id}`}
                         className="font-medium text-primary-700 hover:underline"
                       >
                         {patientName(v.patient)}
@@ -387,7 +387,7 @@ function NurseDashboard({ data }: { data: any }) {
               {(data.pendingEducationReviews ?? []).map((p: DischargePackage) => (
                 <li key={p._id}>
                   <Link
-                    to={`/discharge/${p._id}`}
+                    to={`/app/discharge/${p._id}`}
                     className="block rounded-lg border p-3 hover:border-primary-600 hover:bg-[var(--color-primary-50)]"
                     style={{ borderColor: 'var(--color-border)' }}
                   >
@@ -406,7 +406,7 @@ function NurseDashboard({ data }: { data: any }) {
           title="My ward"
           subtitle={`${beds.filter((b: any) => b.status === 'occupied').length} of ${beds.length} beds occupied`}
           action={
-            <Link to="/beds">
+            <Link to="/app/beds">
               <Button size="sm" variant="ghost" icon={<ArrowRightIcon className="h-4 w-4" />}>
                 Full bed map
               </Button>
@@ -497,7 +497,7 @@ function PharmacistDashboard({ data }: { data: any }) {
             {flags.slice(0, 12).map((flag: any, i: number) => (
               <li key={`${flag.packageId}-${flag.flagId}-${i}`}>
                 <Link
-                  to={`/discharge/${flag.packageId}`}
+                  to={`/app/discharge/${flag.packageId}`}
                   className="block rounded-lg border p-3 transition-colors hover:border-primary-600"
                   style={{ borderColor: 'var(--color-border)' }}
                 >
@@ -596,7 +596,7 @@ function CoordinatorDashboard({ data }: { data: any }) {
                     </Badge>
                   </Td>
                   <Td>
-                    <Link to={`/discharge/${rec.packageId}`}>
+                    <Link to={`/app/discharge/${rec.packageId}`}>
                       <Button size="sm" variant="outline">
                         Book
                       </Button>

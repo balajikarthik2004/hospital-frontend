@@ -96,7 +96,7 @@ export function Patient360Page() {
   return (
     <>
       <Link
-        to="/patients"
+        to="/app/patients"
         className="mb-4 inline-flex items-center gap-1.5 text-xs font-medium text-muted transition-colors hover:text-[var(--color-primary)]"
       >
         <ArrowLeftIcon className="h-3.5 w-3.5" />
@@ -153,7 +153,7 @@ export function Patient360Page() {
               <Button onClick={() => setInitiating(true)}>Initiate discharge</Button>
             )}
             {activePackage && (
-              <Link to={`/discharge/${activePackage._id}`}>
+              <Link to={`/app/discharge/${activePackage._id}`}>
                 <Button variant="outline">Open discharge package</Button>
               </Link>
             )}
@@ -233,7 +233,7 @@ export function Patient360Page() {
                   <Button
                     size="sm"
                     icon={<PlusIcon className="h-4 w-4" />}
-                    onClick={() => navigate(`/scheduling?patient=${patient._id}`)}
+                    onClick={() => navigate(`/app/scheduling?patient=${patient._id}`)}
                   >
                     Schedule
                   </Button>
@@ -325,7 +325,7 @@ export function Patient360Page() {
               </thead>
               <tbody>
                 {data.dischargePackages.map((p) => (
-                  <Tr key={p._id} onClick={() => navigate(`/discharge/${p._id}`)}>
+                  <Tr key={p._id} onClick={() => navigate(`/app/discharge/${p._id}`)}>
                     <Td className="font-mono text-xs">{p.packageId}</Td>
                     <Td>
                       <StatusPill status={p.status} />
@@ -336,7 +336,7 @@ export function Patient360Page() {
                       {p.completedAt ? fmtDateTime(p.completedAt) : '—'}
                     </Td>
                     <Td>
-                      <Link to={`/discharge/${p._id}`} onClick={(e) => e.stopPropagation()}>
+                      <Link to={`/app/discharge/${p._id}`} onClick={(e) => e.stopPropagation()}>
                         <Button size="sm" variant="outline">
                           Open
                         </Button>
@@ -356,7 +356,7 @@ export function Patient360Page() {
         open={initiating}
         onClose={() => setInitiating(false)}
         admissionId={activeAdmission?._id}
-        onCreated={(pkgId) => navigate(`/discharge/${pkgId}`)}
+        onCreated={(pkgId) => navigate(`/app/discharge/${pkgId}`)}
       />
     </>
   );

@@ -22,25 +22,30 @@ import { cn } from '@/lib/utils';
 
 /**
  * A categorical palette that stays legible in both themes and keeps a
- * consistent meaning across the app: teal is the primary series, indigo the
- * comparison, emerald positive, amber attention, red critical.
+ * consistent meaning across the app: teal is the primary series, steel the
+ * comparison, forest positive, ochre attention, brick critical.
+ *
+ * The order matters. Adjacent entries differ in lightness as well as in
+ * hue, so a two- or three-series chart stays readable printed in grey — and
+ * a discharge summary does get printed. The previous ramp put indigo next
+ * to sapphire at nearly the same value, which collapsed in exactly that case.
  */
 export const CHART_COLORS = [
-  '#1E90A0',
-  '#5B5BD6',
-  '#0E9F6E',
-  '#D08700',
-  '#8B5CF6',
-  '#DC2626',
-  '#0C5E6C',
-  '#94A3B8',
+  '#156B5E', // Clinical Teal — primary series
+  '#B8500C', // Burnt orange
+  '#3C5E93', // Steel blue
+  '#99650D', // Ochre
+  '#7B4FA8', // Plum
+  '#2A7F4C', // Forest
+  '#4EB09C', // Light teal
+  '#78746C', // Warm grey
 ];
 
 export const SEVERITY_COLORS = {
-  critical: '#DC2626',
-  high: '#EA580C',
-  medium: '#D08700',
-  low: '#2563EB',
+  critical: '#B5271A',
+  high: '#B8500C',
+  medium: '#8A6D09',
+  low: '#1E7B6B',
 } as const;
 
 const AXIS = {
@@ -112,14 +117,18 @@ export function KpiCard({
     delta && (delta.goodWhen === 'up' ? delta.value >= 0 : delta.value <= 0);
 
   return (
-    <Card className="group">
+    // A KPI card is a readout, not a control: it does not lift, scale or
+    // shadow on hover. Four of them sit in a row at the top of every
+    // dashboard, and when each one reacted to the pointer, crossing the row
+    // set off a wave of movement that pulled the eye away from the numbers.
+    <Card className="relative overflow-hidden">
       <div className="flex items-start justify-between gap-3">
         <p className="eyebrow">{label}</p>
         {icon && (
           <span
-            className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg transition-transform duration-200 group-hover:scale-105"
+            className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg"
             style={{
-              background: `color-mix(in srgb, ${toneColor} 12%, transparent)`,
+              background: `color-mix(in srgb, ${toneColor} 10%, transparent)`,
               color: toneColor,
             }}
             aria-hidden
@@ -129,23 +138,23 @@ export function KpiCard({
         )}
       </div>
 
-      <p className="mt-2.5 flex items-baseline gap-1.5">
-        <span className="text-[1.75rem] font-semibold leading-none tracking-[-0.03em] tabular">
+      <div className="mt-3 flex items-baseline gap-2">
+        {/* Tight tracking and a real 700: the number is the one thing on
+            this card anyone actually reads from across a room. */}
+        <span className="text-[2.125rem] font-[700] leading-none tracking-[-0.035em] tabular">
           {value}
         </span>
-        {unit && <span className="text-[0.8125rem] font-medium text-muted">{unit}</span>}
+        {unit && <span className="text-xs font-[620] text-muted">{unit}</span>}
         {delta && (
           <span
-            className="ml-1 inline-flex items-center gap-0.5 rounded-full px-1.5 py-0.5 text-[0.625rem] font-semibold tabular"
-            style={{
-              background: deltaGood ? 'var(--color-success-light)' : 'var(--color-danger-light)',
-              color: deltaGood ? 'var(--color-success)' : 'var(--color-danger)',
-            }}
+            className="ml-auto inline-flex items-center gap-0.5 text-[0.75rem] font-[680] tabular"
+            style={{ color: deltaGood ? 'var(--color-success)' : 'var(--color-danger)' }}
           >
-            {delta.value >= 0 ? '▲' : '▼'} {Math.abs(delta.value).toFixed(1)}%
+            <span aria-hidden>{delta.value >= 0 ? '↑' : '↓'}</span>
+            <span>{Math.abs(delta.value).toFixed(1)}%</span>
           </span>
         )}
-      </p>
+      </div>
 
       {hint && <p className="mt-2 text-xs leading-relaxed text-muted">{hint}</p>}
     </Card>
@@ -198,7 +207,7 @@ export function TrendChart({
               </linearGradient>
             ))}
           </defs>
-          <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border)" vertical={false} />
+          <CartesianGrid stroke="var(--color-border)" vertical={false} />
           <XAxis dataKey={xKey} {...AXIS} />
           <YAxis {...AXIS} width={44} />
           <Tooltip content={<ChartTooltip suffix={suffix} />} />
@@ -276,7 +285,6 @@ export function BarCard({
           barCategoryGap={horizontal ? 8 : '22%'}
         >
           <CartesianGrid
-            strokeDasharray="3 3"
             stroke="var(--color-border)"
             vertical={horizontal}
             horizontal={!horizontal}

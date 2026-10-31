@@ -128,7 +128,7 @@ export function AdmissionsPage() {
                   )
                 );
                 return (
-                  <Tr key={a._id} onClick={() => navigate(`/patients/${patient?._id}`)}>
+                  <Tr key={a._id} onClick={() => navigate(`/app/patients/${patient?._id}`)}>
                     <Td className="font-mono text-xs">{a.admissionId}</Td>
                     <Td>
                       <span className="font-medium">{patientName(patient)}</span>

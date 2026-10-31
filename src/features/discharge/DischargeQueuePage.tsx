@@ -107,7 +107,7 @@ export function DischargeQueuePage() {
       />
 
       {/* ─── The queue at a glance ────────────────────────────────────────── */}
-      <div className="stagger mb-5 grid grid-cols-2 gap-3 sm:gap-4 xl:grid-cols-4">
+      <div className="stagger mb-6 grid grid-cols-2 gap-3.5 sm:gap-4 xl:grid-cols-4">
         {PULSE.map((stage) => {
           const count = packages.filter((p) =>
             stage.match.includes(p.status as PackageStatus)
@@ -118,20 +118,22 @@ export function DischargeQueuePage() {
               key={stage.key}
               onClick={() => setStatus(isFilter ? '' : stage.match[0])}
               className={cn(
-                'rounded-xl border bg-[var(--color-surface)] p-4 text-left shadow-xs transition-all duration-200',
+                'rounded-2xl border bg-[var(--color-surface)] p-5 text-left shadow-xs transition-all duration-200',
                 'hover:-translate-y-0.5 hover:shadow-md',
-                isFilter ? 'border-primary-500 ring-4 ring-primary-600/10' : 'border-[var(--color-border)]'
+                isFilter
+                  ? 'border-primary-500 ring-4 ring-primary-500/15'
+                  : 'border-[var(--color-border)] hover:border-[var(--color-border-dark)]'
               )}
             >
               <div className="flex items-center gap-2">
                 <span
-                  className="h-1.5 w-1.5 rounded-full"
-                  style={{ background: stage.tone }}
+                  className="h-2 w-2 rounded-full ring-2"
+                  style={{ background: stage.tone, ['--tw-ring-color' as string]: `${stage.tone}33` }}
                   aria-hidden
                 />
                 <span className="eyebrow">{stage.label}</span>
               </div>
-              <p className="mt-2 text-[1.75rem] font-semibold leading-none tracking-[-0.03em] tabular">
+              <p className="mt-3 text-[2rem] font-bold leading-none tracking-[-0.03em] tabular">
                 {count}
               </p>
             </button>
@@ -226,7 +228,7 @@ export function DischargeQueuePage() {
               </thead>
               <tbody>
                 {packages.map((pkg) => (
-                  <Tr key={pkg._id} onClick={() => navigate(`/discharge/${pkg._id}`)}>
+                  <Tr key={pkg._id} onClick={() => navigate(`/app/discharge/${pkg._id}`)}>
                     <Td>
                       <div className="flex items-center gap-2.5">
                         <Avatar name={patientName(pkg.patientId)} size={32} />
@@ -261,7 +263,7 @@ export function DischargeQueuePage() {
                       {fmtRelative(pkg.initiatedAt)}
                     </Td>
                     <Td>
-                      <Link to={`/discharge/${pkg._id}`} onClick={(e) => e.stopPropagation()}>
+                      <Link to={`/app/discharge/${pkg._id}`} onClick={(e) => e.stopPropagation()}>
                         <Button size="sm" variant="outline">
                           Open
                         </Button>
@@ -277,7 +279,7 @@ export function DischargeQueuePage() {
       <InitiateDischargeModal
         open={initiating}
         onClose={() => setInitiating(false)}
-        onCreated={(id) => navigate(`/discharge/${id}`)}
+        onCreated={(id) => navigate(`/app/discharge/${id}`)}
       />
     </>
   );

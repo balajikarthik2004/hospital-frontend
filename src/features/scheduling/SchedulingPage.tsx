@@ -418,7 +418,7 @@ function AppointmentTable({ appointments }: { appointments: Appointment[] }) {
                 <Td className="font-mono text-xs">{a.scheduledTime}</Td>
                 <Td>
                   <Link
-                    to={`/patients/${(a.patientId as Patient)?._id}`}
+                    to={`/app/patients/${(a.patientId as Patient)?._id}`}
                     className="font-medium text-primary-700 hover:underline"
                   >
                     {patientName(a.patientId as Patient)}

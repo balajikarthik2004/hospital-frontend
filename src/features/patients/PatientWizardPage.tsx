@@ -127,7 +127,7 @@ export function PatientWizardPage() {
       'Patient registered',
       `${data.patient.patientId} — ${data.patient.demographics.firstName} ${data.patient.demographics.lastName}`
     );
-    navigate(`/patients/${data.patient._id}`);
+    navigate(`/app/patients/${data.patient._id}`);
   });
 
   const d = form.demographics;
@@ -139,7 +139,7 @@ export function PatientWizardPage() {
       <PageHeader
         breadcrumb={
           <Link
-            to="/patients"
+            to="/app/patients"
             className="inline-flex items-center gap-1.5 text-xs text-muted hover:text-primary-700"
           >
             <ArrowLeftIcon className="h-3.5 w-3.5" />

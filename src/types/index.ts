@@ -27,7 +27,8 @@ export type Permission =
   | 'audit:view'
   | 'users:manage'
   | 'beds:manage'
-  | 'beds:view';
+  | 'beds:view'
+  | 'catalogue:manage';
 
 export interface User {
   id: string;

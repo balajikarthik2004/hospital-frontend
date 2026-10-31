@@ -66,7 +66,12 @@ export function LoginPage() {
   const location = useLocation();
 
   if (user) {
-    const from = (location.state as { from?: string } | null)?.from ?? '/';
+    // Staff belong in the application, not on the public website. `from` is
+    // whatever route turned them away, so only honour it when it is one of
+    // ours — a stale bookmark to "/" would otherwise drop a clinician on the
+    // hospital's marketing page after a successful sign-in.
+    const attempted = (location.state as { from?: string } | null)?.from;
+    const from = attempted?.startsWith('/app') ? attempted : '/app';
     return <Navigate to={from} replace />;
   }
 
@@ -78,47 +83,54 @@ export function LoginPage() {
   return (
     <div className="flex min-h-screen" style={{ background: 'var(--color-bg)' }}>
       {/* ─── Narrative panel ─────────────────────────────────────────────── */}
+      {/* A single deep field with one light source, rather than the previous
+          three-stop sweep plus two coloured blur orbs. The orbs were doing
+          the work a photograph would do in a real marketing panel, and at
+          laptop width they landed behind the body copy and greyed it out. */}
       <div
         className="relative hidden w-[52%] flex-col justify-between overflow-hidden p-12 text-white xl:p-16 lg:flex"
         style={{
           background:
-            'radial-gradient(120% 120% at 12% 0%, #0E7490 0%, #103A56 48%, #0A1424 100%)',
+            'radial-gradient(120% 110% at 15% 0%, #1E7B6B 0%, #11564C 38%, #0F2E2A 70%, #121110 100%)',
         }}
       >
-        <div className="bg-grid pointer-events-none absolute inset-0 opacity-50" aria-hidden />
-        <div
-          className="pointer-events-none absolute -right-24 -top-24 h-96 w-96 rounded-full opacity-25 blur-3xl"
-          style={{ background: '#22D3EE' }}
-          aria-hidden
-        />
+        <div className="bg-grid pointer-events-none absolute inset-0 opacity-25" aria-hidden />
 
         <div className="relative flex items-center gap-3">
-          <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-white/15 ring-1 ring-white/20 backdrop-blur">
-            <Logo size={24} />
+          <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-white/[0.08] ring-1 ring-white/15">
+            <Logo size={28} />
           </span>
-          <span className="text-[0.9375rem] font-semibold tracking-[-0.01em]">SafeDischarge</span>
+          <span className="text-base font-[680] tracking-[-0.02em] text-white">SafeDischarge</span>
         </div>
 
         <div className="relative max-w-xl">
-          <p className="eyebrow !text-white/55">Care transitions, coordinated</p>
-          <h1 className="display mt-4 text-[2.75rem] leading-[1.1] xl:text-[3.25rem]">
+          <div className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/[0.06] px-3 py-1 text-[0.6875rem] font-[620] uppercase tracking-[0.08em] text-white/70">
+            Multi-agent clinical transitions
+          </div>
+          <h1 className="display mt-5 text-[2.75rem] leading-[1.08] xl:text-[3.25rem]">
             The discharge is written before the round ends.
           </h1>
           <p className="mt-5 max-w-lg text-[0.9375rem] leading-relaxed text-white/75">
-            SafeDischarge drafts the whole package in minutes. It never discharges anyone —
-            that decision stays with the clinician who signs.
+            SafeDischarge drafts the complete multi-specialty discharge package in parallel.
+            It never executes autonomous discharge — clinicians verify, adjust, and sign.
           </p>
 
-          <ol className="mt-11 space-y-5">
+          {/* The beats are a numbered list, not three stacked glass cards.
+              Framing each one in its own bordered box gave equal weight to
+              the chrome and to the sentence inside it. */}
+          <ol className="mt-10 space-y-5 border-l border-white/15 pl-6">
             {STORY.map((beat) => (
-              <li key={beat.step} className="flex gap-4">
-                <span className="mt-0.5 font-mono text-xs text-white/40">{beat.step}</span>
-                <div className="border-l border-white/15 pl-4">
-                  <p className="text-[0.8125rem] font-semibold text-white/95">{beat.title}</p>
-                  <p className="mt-1 max-w-md text-[0.8125rem] leading-relaxed text-white/60">
-                    {beat.body}
-                  </p>
-                </div>
+              <li key={beat.step} className="relative">
+                <span
+                  className="absolute -left-[1.78rem] top-1 font-mono text-[0.625rem] font-[680] text-white/35"
+                  aria-hidden
+                >
+                  {beat.step}
+                </span>
+                <p className="text-[0.8125rem] font-[620] text-white">{beat.title}</p>
+                <p className="mt-0.5 text-[0.8125rem] leading-relaxed text-white/60">
+                  {beat.body}
+                </p>
               </li>
             ))}
           </ol>
@@ -129,16 +141,16 @@ export function LoginPage() {
             {[
               ['3.2 h → minutes', 'Preparation time'],
               ['100%', 'Clinician-signed'],
-              ['Every action', 'Audit logged'],
+              ['Multi-agent', 'Consensus safety checks'],
             ].map(([value, label]) => (
               <div key={label}>
-                <dt className="text-xl font-semibold tracking-[-0.02em]">{value}</dt>
+                <dt className="text-xl font-[680] tracking-[-0.02em] text-white">{value}</dt>
                 <dd className="eyebrow mt-1 !text-white/45">{label}</dd>
               </div>
             ))}
           </dl>
-          <p className="mt-7 text-[0.6875rem] text-white/35">
-            Demonstration environment. All patient data is synthetic and clearly fictional.
+          <p className="mt-6 text-[0.6875rem] text-white/35">
+            HIPAA-ready architecture · Synthetic simulation data · Fictional patient records
           </p>
         </div>
       </div>
@@ -184,12 +196,14 @@ export function LoginPage() {
             </Button>
           </form>
 
-          <div className="mt-9">
+          <div className="mt-8">
             <div className="mb-3 flex items-baseline justify-between">
-              <p className="eyebrow">Demo accounts</p>
-              <p className="font-mono text-[0.6875rem] text-faint">{DEMO_PASSWORD}</p>
+              <p className="eyebrow">Demo credentials</p>
+              <span className="rounded-md border border-[var(--color-info-border)] bg-[var(--color-primary-50)] px-2 py-0.5 font-mono text-[0.6875rem] font-[620] text-[var(--color-primary)]">
+                Key: {DEMO_PASSWORD}
+              </span>
             </div>
-            <div className="space-y-1.5">
+            <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
               {DEMO_ACCOUNTS.map((account) => {
                 const selected = email === account.email;
                 return (
@@ -201,28 +215,24 @@ export function LoginPage() {
                       setPassword(DEMO_PASSWORD);
                     }}
                     className={cn(
-                      'flex w-full items-center gap-3 rounded-lg border px-3 py-2.5 text-left transition-all duration-150',
+                      'flex flex-col items-start rounded-lg border p-2.5 text-left transition-colors duration-100',
                       selected
-                        ? 'border-primary-500 bg-[var(--color-primary-50)] shadow-xs'
-                        : 'border-[var(--color-border)] bg-[var(--color-surface)] hover:border-[var(--color-border-dark)] hover:bg-[var(--color-surface-muted)]'
+                        ? 'border-primary-600 bg-[var(--color-primary-50)]'
+                        : 'border-[var(--color-border)] bg-[var(--color-surface)] hover:border-[var(--color-border-strong)] hover:bg-[var(--color-surface-muted)]'
                     )}
                   >
-                    <span
-                      className={cn(
-                        'flex h-5 w-5 shrink-0 items-center justify-center rounded-full border transition-colors',
-                        selected
-                          ? 'border-primary-600 bg-primary-600 text-white'
-                          : 'border-[var(--color-border-dark)]'
-                      )}
-                      aria-hidden
-                    >
-                      {selected && <CheckIcon className="h-3 w-3" strokeWidth={3} />}
-                    </span>
-                    <span className="min-w-0 flex-1">
-                      <span className="block text-[0.8125rem] font-medium">{account.role}</span>
-                      <span className="block truncate text-[0.6875rem] text-faint">
-                        {account.detail}
+                    <div className="flex w-full items-center justify-between">
+                      <span className="text-[0.75rem] font-[680] text-[var(--color-text)]">
+                        {account.role}
                       </span>
+                      {selected && (
+                        <span className="flex h-4 w-4 items-center justify-center rounded-full bg-primary-700 text-white">
+                          <CheckIcon className="h-2.5 w-2.5" strokeWidth={3} />
+                        </span>
+                      )}
+                    </div>
+                    <span className="mt-1 line-clamp-2 text-[0.625rem] leading-tight text-faint">
+                      {account.detail}
                     </span>
                   </button>
                 );

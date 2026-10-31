@@ -97,7 +97,7 @@ export function AppLayout() {
         />
       )}
 
-      <div className="lg:pl-[15.5rem]">
+      <div className="lg:pl-64">
         <Header onMenuClick={() => setSidebarOpen(true)} />
         {/* Keyed on the path so every navigation gets a short settle-in
             animation instead of snapping. */}

@@ -1,5 +1,15 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
+import type { AxiosInstance } from 'axios';
 import { api, errorMessage } from '@/lib/api';
+
+export interface UseApiOptions {
+  /**
+   * Which axios instance to call through. Defaults to the staff client.
+   * The public website passes `publicApi`, which carries no staff token and
+   * does not sign anyone out on a 401.
+   */
+  client?: AxiosInstance;
+}
 
 interface UseApiResult<T> {
   data: T | null;
@@ -13,7 +23,12 @@ interface UseApiResult<T> {
  * GETs a URL and keeps the result. Pass `null` as the url to skip the request
  * (useful while a dependent id is still unknown).
  */
-export function useApi<T>(url: string | null, deps: unknown[] = []): UseApiResult<T> {
+export function useApi<T>(
+  url: string | null,
+  deps: unknown[] = [],
+  options: UseApiOptions = {}
+): UseApiResult<T> {
+  const client = options.client ?? api;
   const [data, setDataState] = useState<T | null>(null);
   const [loading, setLoading] = useState(Boolean(url));
   const [error, setError] = useState<string | null>(null);
@@ -28,7 +43,7 @@ export function useApi<T>(url: string | null, deps: unknown[] = []): UseApiResul
     setLoading(true);
     setError(null);
     try {
-      const res = await api.get<T>(url);
+      const res = await client.get<T>(url);
       if (requestId === latest.current) setDataState(res.data);
     } catch (err) {
       if (requestId === latest.current) setError(errorMessage(err));
@@ -36,7 +51,7 @@ export function useApi<T>(url: string | null, deps: unknown[] = []): UseApiResul
       if (requestId === latest.current) setLoading(false);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [url]);
+  }, [url, client]);
 
   useEffect(() => {
     void fetchData();

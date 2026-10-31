@@ -101,7 +101,7 @@ export function PatientListPage() {
         story="Everyone known to the service, admitted or not. Open a record for the full chart: admissions, medications, vitals, appointments and discharge history."
         actions={
           can('patient:register') && (
-            <Link to="/patients/new">
+            <Link to="/app/patients/new">
               <Button icon={<PlusIcon className="h-4 w-4" />}>Register patient</Button>
             </Link>
           )
@@ -168,41 +168,50 @@ export function PatientListPage() {
             </thead>
             <tbody>
               {sorted.map((p) => (
-                <Tr key={p._id} onClick={() => navigate(`/patients/${p._id}`)}>
+                <Tr key={p._id} onClick={() => navigate(`/app/patients/${p._id}`)}>
                   <Td>
-                    <div className="flex items-center gap-2.5">
+                    <div className="flex items-center gap-3">
                       <span
-                        className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-[11px] font-semibold text-white"
-                        style={{ background: 'var(--color-primary)' }}
+                        className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl text-xs font-bold text-white shadow-xs"
+                        style={{
+                          background: 'linear-gradient(135deg, #2A9280 0%, #11564C 100%)',
+                        }}
                       >
                         {initials(patientName(p))}
                       </span>
                       <span className="min-w-0">
-                        <span className="block truncate font-medium">{patientName(p)}</span>
+                        <span className="block truncate font-bold text-[var(--color-text)] tracking-tight">
+                          {patientName(p)}
+                        </span>
                         <span className="block font-mono text-[11px] text-faint">
                           {p.patientId}
                         </span>
                       </span>
                     </div>
                   </Td>
-                  <Td className="tabular-nums">{patientAge(p)}</Td>
+                  <Td className="tabular-nums font-medium">{patientAge(p)}</Td>
                   <Td>
-                    <Badge tone={STATUS_TONE[p.status]}>{titleCase(p.status)}</Badge>
+                    <Badge
+                      tone={STATUS_TONE[p.status]}
+                      dot={p.status === 'in_treatment' || p.status === 'discharge_pending'}
+                    >
+                      {titleCase(p.status)}
+                    </Badge>
                   </Td>
-                  <Td className="text-muted">
+                  <Td className="text-muted font-medium">
                     {p.activeAdmission ? (
                       <>
-                        {p.activeAdmission.ward}
+                        <span className="text-[var(--color-text)] font-semibold">{p.activeAdmission.ward}</span>
                         <span className="block text-xs text-faint">
-                          {p.activeAdmission.room}-{p.activeAdmission.bed}
+                          Room {p.activeAdmission.room} · Bed {p.activeAdmission.bed}
                         </span>
                       </>
                     ) : (
                       '—'
                     )}
                   </Td>
-                  <Td className="text-muted">{p.activeAdmission?.attendingPhysician || '—'}</Td>
-                  <Td className="whitespace-nowrap text-muted">
+                  <Td className="text-muted font-medium">{p.activeAdmission?.attendingPhysician || '—'}</Td>
+                  <Td className="whitespace-nowrap text-muted tabular-nums font-medium">
                     {p.activeAdmission ? fmtDate(p.activeAdmission.admissionDate) : '—'}
                   </Td>
                   <Td>
@@ -222,7 +231,7 @@ export function PatientListPage() {
                         ))}
                       </div>
                     ) : (
-                      <span className="text-xs text-faint">NKDA</span>
+                      <span className="text-xs font-medium text-faint">NKDA</span>
                     )}
                   </Td>
                 </Tr>

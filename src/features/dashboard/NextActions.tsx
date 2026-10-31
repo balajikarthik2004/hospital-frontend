@@ -42,20 +42,20 @@ interface Action {
 const URGENCY: Record<Urgency, { ink: string; bg: string; border: string; label: string }> = {
   critical: {
     ink: 'var(--color-danger)',
-    bg: 'var(--color-danger-light)',
-    border: 'var(--color-danger-border)',
+    bg: 'rgba(239, 68, 68, 0.08)',
+    border: 'rgba(239, 68, 68, 0.25)',
     label: 'Do this first',
   },
   high: {
     ink: 'var(--color-warning)',
-    bg: 'var(--color-warning-light)',
-    border: 'var(--color-warning-border)',
+    bg: 'rgba(245, 158, 11, 0.08)',
+    border: 'rgba(245, 158, 11, 0.25)',
     label: 'Waiting on you',
   },
   normal: {
     ink: 'var(--color-info)',
-    bg: 'var(--color-info-light)',
-    border: 'var(--color-info-border)',
+    bg: 'rgba(2, 132, 199, 0.08)',
+    border: 'rgba(2, 132, 199, 0.25)',
     label: 'Coming up',
   },
 };
@@ -375,7 +375,7 @@ export function NextActions({ data }: { data: any }) {
             ? ({ children }: { children: React.ReactNode }) => (
                 <Link
                   to={action.href!}
-                  className="group flex items-center gap-4 border-t px-5 py-3.5 transition-colors hover:bg-[var(--color-surface-muted)]"
+                  className="group flex items-center gap-4 border-t px-6 py-4 transition-all duration-150 hover:bg-[var(--color-surface-muted)]"
                   style={{ borderColor: 'var(--color-border)' }}
                 >
                   {children}
@@ -383,7 +383,7 @@ export function NextActions({ data }: { data: any }) {
               )
             : ({ children }: { children: React.ReactNode }) => (
                 <div
-                  className="flex items-center gap-4 border-t px-5 py-3.5"
+                  className="flex items-center gap-4 border-t px-6 py-4"
                   style={{ borderColor: 'var(--color-border)' }}
                 >
                   {children}
@@ -394,32 +394,32 @@ export function NextActions({ data }: { data: any }) {
             <li key={action.id} style={{ animationDelay: `${i * 50}ms` }}>
               <Row>
                 <span
-                  className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border"
+                  className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border shadow-xs transition-transform duration-200 group-hover:scale-105"
                   style={{ background: tone.bg, borderColor: tone.border, color: tone.ink }}
                   aria-hidden
                 >
-                  <action.icon className="h-[18px] w-[18px]" />
+                  <action.icon className="h-5 w-5" />
                 </span>
 
                 <span className="min-w-0 flex-1">
-                  <span className="flex flex-wrap items-center gap-2">
-                    <span className="text-[0.8125rem] font-semibold">{action.title}</span>
+                  <span className="flex flex-wrap items-center gap-2.5">
+                    <span className="text-[0.875rem] font-bold tracking-tight">{action.title}</span>
                     <span
-                      className="rounded-full px-1.5 py-px text-[0.5625rem] font-bold uppercase tracking-[0.06em]"
-                      style={{ background: tone.bg, color: tone.ink }}
+                      className="rounded-full border px-2 py-0.5 text-[0.625rem] font-bold uppercase tracking-wider"
+                      style={{ background: tone.bg, color: tone.ink, borderColor: tone.border }}
                     >
                       {tone.label}
                     </span>
                   </span>
-                  <span className="mt-0.5 block text-xs leading-relaxed text-muted">
+                  <span className="mt-1 block text-xs leading-relaxed text-muted">
                     {action.detail}
                   </span>
                 </span>
 
                 {action.href && (
-                  <span className="flex shrink-0 items-center gap-1 text-xs font-medium text-[var(--color-primary)]">
-                    <span className="hidden sm:inline">{action.cta}</span>
-                    <ChevronRightIcon className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
+                  <span className="flex shrink-0 items-center gap-1.5 rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] px-3 py-1.5 text-xs font-semibold text-[var(--color-primary)] shadow-xs transition-all group-hover:border-primary-400 group-hover:bg-primary-50 dark:group-hover:bg-primary-950">
+                    <span>{action.cta}</span>
+                    <ChevronRightIcon className="h-3.5 w-3.5 stroke-[2.5] transition-transform group-hover:translate-x-0.5" />
                   </span>
                 )}
               </Row>
@@ -520,16 +520,19 @@ export function WorkflowStrip({ variant = 'staff' }: { variant?: 'staff' | 'pati
   };
 
   return (
-    <Card className="mb-5 overflow-hidden" padded={false}>
-      <div className="flex items-start justify-between gap-4 px-5 pt-4">
+    <Card className="mb-6 overflow-hidden rounded-[14px] border border-[var(--color-border)] shadow-xs" padded={false}>
+      <div className="flex items-start justify-between gap-4 px-6 pt-5 pb-1">
         <div>
-          <p className="eyebrow">
-            {isPatient ? 'What happens before you go home' : 'How a discharge works here'}
-          </p>
+          <div className="flex items-center gap-2">
+            <span className="h-2 w-2 rounded-full bg-[var(--color-primary)]" />
+            <p className="eyebrow">
+              {isPatient ? 'What happens before you go home' : 'How SafeDischarge works'}
+            </p>
+          </div>
           <p className="mt-1 text-[0.8125rem] text-muted">
             {isPatient
               ? 'Four steps, and a person signs their name at every one of them.'
-              : 'The agents prepare; the clinicians decide. Nothing leaves this building unsigned.'}
+              : 'Multi-agent AI prepares the draft package; clinicians verify and decide.'}
           </p>
         </div>
         <button
@@ -541,8 +544,6 @@ export function WorkflowStrip({ variant = 'staff' }: { variant?: 'staff' | 'pati
         </button>
       </div>
 
-      {/* The grid's own background shows through the 1px gaps as hairlines, so
-          it must not carry padding of its own. */}
       <ol
         className={cn(
           'stagger mt-4 grid gap-px border-t border-[var(--color-border)] bg-[var(--color-border)]',
@@ -552,12 +553,12 @@ export function WorkflowStrip({ variant = 'staff' }: { variant?: 'staff' | 'pati
         {steps.map((step, i) => (
           <li
             key={step.label}
-            className="relative bg-[var(--color-surface)] p-4"
+            className="group relative bg-[var(--color-surface)] p-5 transition-colors hover:bg-[var(--color-surface-muted)]"
             style={{ ['--i' as string]: i }}
           >
-            <div className="flex items-center gap-2">
+            <div className="flex items-center justify-between">
               <span
-                className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg"
+                className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl transition-transform duration-200 group-hover:scale-105"
                 style={{
                   background: `color-mix(in srgb, ${step.tone} 14%, transparent)`,
                   color: step.tone,
@@ -566,15 +567,12 @@ export function WorkflowStrip({ variant = 'staff' }: { variant?: 'staff' | 'pati
               >
                 <step.icon className="h-4 w-4" />
               </span>
-              <span className="text-[0.8125rem] font-semibold">{step.label}</span>
-              {i < steps.length - 1 && (
-                <ArrowRightIcon
-                  className="ml-auto h-3.5 w-3.5 shrink-0 text-[var(--color-border-dark)]"
-                  aria-hidden
-                />
-              )}
+              <span className="font-mono text-[0.6875rem] font-bold text-faint opacity-60">
+                0{i + 1}
+              </span>
             </div>
-            <p className="mt-2 text-xs leading-relaxed text-muted">{step.body}</p>
+            <h4 className="mt-3 text-[0.875rem] font-bold tracking-tight">{step.label}</h4>
+            <p className="mt-1.5 text-xs leading-relaxed text-muted">{step.body}</p>
           </li>
         ))}
       </ol>

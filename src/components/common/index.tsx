@@ -22,9 +22,12 @@ import { cn } from '@/lib/utils';
    ═══════════════════════════════════════════════════════════════════════════ */
 
 /**
- * The mark: a shield (safety) whose interior reads as a discharge doorway with
- * a check. Drawn rather than an image file so it inherits currentColor and
- * stays crisp at every size.
+ * The mark: a shield carrying a discharge check.
+ *
+ * Two tones of the brand teal, close together — the old three-stop gradient
+ * ran most of the ramp at once, which at 20px in the sidebar turned to mud.
+ * A mark this small is read as a silhouette, so the shape does the work and
+ * the colour stays quiet.
  */
 export function Logo({ size = 32, className }: { size?: number; className?: string }) {
   return (
@@ -33,23 +36,31 @@ export function Logo({ size = 32, className }: { size?: number; className?: stri
       height={size}
       viewBox="0 0 32 32"
       fill="none"
-      className={className}
+      className={cn('shrink-0', className)}
       aria-hidden
     >
       <defs>
-        <linearGradient id="sd-logo" x1="0" y1="0" x2="1" y2="1">
-          <stop offset="0%" stopColor="#22D3EE" />
-          <stop offset="100%" stopColor="#0E7490" />
+        <linearGradient id="sd-shield-grad" x1="5" y1="2.5" x2="27" y2="29.5" gradientUnits="userSpaceOnUse">
+          <stop offset="0%" stopColor="#2A9280" />
+          <stop offset="100%" stopColor="#11564C" />
         </linearGradient>
       </defs>
       <path
-        d="M16 2.5 27 6.2v9.1c0 6.9-4.5 12.4-11 14.2C9.5 27.7 5 22.2 5 15.3V6.2L16 2.5Z"
-        fill="url(#sd-logo)"
+        d="M16 2.5L27 6.2V15.5C27 22.4 22.2 27.8 16 29.5C9.8 27.8 5 22.4 5 15.5V6.2L16 2.5Z"
+        fill="url(#sd-shield-grad)"
+      />
+      {/* A hairline of light along the top edge — the one thing that keeps
+          the shield from reading as a flat sticker. */}
+      <path
+        d="M16 2.5L27 6.2V15.5C27 22.4 22.2 27.8 16 29.5C9.8 27.8 5 22.4 5 15.5V6.2L16 2.5Z"
+        stroke="#ffffff"
+        strokeOpacity="0.22"
+        strokeWidth="1"
       />
       <path
-        d="M10.8 16.3l3.5 3.6 7-7.4"
-        stroke="#fff"
-        strokeWidth="2.4"
+        d="M11 16.2L14.8 19.8L21.5 12.8"
+        stroke="#ffffff"
+        strokeWidth="2.5"
         strokeLinecap="round"
         strokeLinejoin="round"
       />
@@ -63,10 +74,12 @@ export function Wordmark({ compact }: { compact?: boolean }) {
       <Logo size={30} />
       {!compact && (
         <span className="min-w-0">
-          <span className="block truncate text-[0.9375rem] font-semibold leading-tight tracking-[-0.015em]">
+          <span className="block truncate text-[0.9375rem] font-[680] leading-tight tracking-[-0.02em] text-[var(--color-chrome-text)]">
             SafeDischarge
           </span>
-          <span className="eyebrow block truncate text-[0.625rem]">Care transitions</span>
+          <span className="block truncate text-[0.6875rem] font-medium leading-tight tracking-[0.01em] text-[var(--color-chrome-text-muted)]">
+            Clinical Intelligence
+          </span>
         </span>
       )}
     </span>
@@ -87,30 +100,40 @@ type Variant =
   | 'subtle';
 type Size = 'sm' | 'md' | 'lg';
 
+/**
+ * Filled buttons are a flat colour plus one inset hairline of light along
+ * the top edge. The vertical gradients these replace are the clearest tell
+ * of a dated interface: they read as a plastic pill, they shift hue as the
+ * button grows, and they leave nothing in reserve for the hover state. A
+ * flat fill that darkens on press behaves the way a physical control does.
+ */
+const SHEEN = 'shadow-[inset_0_1px_0_0_rgb(255_255_255_/_0.16)]';
+
 const VARIANTS: Record<Variant, string> = {
-  primary:
-    'bg-primary-600 text-white shadow-xs hover:bg-primary-700 active:bg-primary-800 ' +
-    'disabled:bg-primary-600/50',
-  secondary:
-    'bg-secondary-600 text-white shadow-xs hover:bg-secondary-700 disabled:bg-secondary-600/50',
+  primary: `bg-primary-700 text-white ${SHEEN} hover:bg-primary-600 active:bg-primary-800 disabled:bg-primary-700/50`,
+  secondary: `bg-secondary-600 text-white ${SHEEN} hover:bg-secondary-500 active:bg-secondary-700 disabled:opacity-50`,
   ghost:
-    'text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-sunken)] ' +
-    'hover:text-[var(--color-text)]',
-  danger:
-    'bg-[var(--color-danger)] text-white shadow-xs hover:brightness-110 disabled:opacity-50',
-  success:
-    'bg-[var(--color-success)] text-white shadow-xs hover:brightness-110 disabled:opacity-50',
+    'text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-muted)] hover:text-[var(--color-text)]',
+  danger: `bg-[#b5271a] text-white ${SHEEN} hover:bg-[#c43527] active:bg-[#9c2016] disabled:opacity-50`,
+  // Shifted a step darker than the success *token* so that hover can
+  // lighten into #2a7f4c and still clear 4.5:1 with white. Green runs out
+  // of headroom faster than the other hues — anything lighter than that
+  // and the label on a hovered button drops below AA.
+  success: `bg-[#246b41] text-white ${SHEEN} hover:bg-[#2a7f4c] active:bg-[#1d5634] disabled:opacity-50`,
   outline:
     'border border-[var(--color-border-dark)] bg-[var(--color-surface)] text-[var(--color-text)] ' +
     'shadow-xs hover:bg-[var(--color-surface-muted)] hover:border-[var(--color-border-strong)]',
   subtle:
-    'bg-[var(--color-primary-50)] text-[var(--color-primary-dark)] hover:bg-[var(--color-primary-100)]',
+    'bg-[var(--color-primary-50)] text-[var(--color-primary)] border border-[var(--color-info-border)] ' +
+    'hover:bg-[var(--color-primary-100)]',
 };
 
+// One radius per size, and it matches the inputs beside them — a pill-shaped
+// button next to a 12px field is the other thing that reads as unconsidered.
 const SIZES: Record<Size, string> = {
-  sm: 'h-8 px-3 text-xs gap-1.5',
-  md: 'h-9.5 px-3.5 text-[0.8125rem] gap-2',
-  lg: 'h-11 px-5 text-sm gap-2',
+  sm: 'h-8 px-3 text-xs gap-1.5 rounded-lg',
+  md: 'h-9.5 px-3.5 text-[0.8125rem] gap-2 rounded-lg',
+  lg: 'h-11 px-5 text-sm gap-2.5 rounded-xl font-[620]',
 };
 
 export interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
@@ -142,9 +165,13 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(function Button
       ref={ref}
       disabled={disabled || loading}
       className={cn(
-        'inline-flex select-none items-center justify-center rounded-lg font-medium',
-        'transition-[background-color,border-color,color,box-shadow,transform] duration-150',
-        'active:translate-y-px disabled:cursor-not-allowed disabled:opacity-60 disabled:active:translate-y-0',
+        'inline-flex select-none items-center justify-center font-[560]',
+        // Colour only. The old scale-[0.98] on press made the label resample
+        // mid-click, which at 13px looks like a rendering fault rather than
+        // a press; the colour step already reads as one.
+        'transition-colors duration-100',
+        'disabled:cursor-not-allowed disabled:opacity-60',
+        'focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-primary-700/25',
         VARIANTS[variant],
         SIZES[size],
         fullWidth && 'w-full',
@@ -263,18 +290,24 @@ export function Card({
   return (
     <div
       className={cn(
-        'relative rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)]',
+        // 14px, not 20px. The large radius was fighting the 8px radius of
+        // the tables and fields inside it; at this size a card reads as a
+        // sheet of paper instead of as a rounded tile.
+        'relative rounded-[14px] border border-[var(--color-border)] bg-[var(--color-surface)]',
         elevated ? 'shadow-md' : 'shadow-xs',
         accent && 'overflow-hidden',
+        // Only a card that is itself a link lifts, and it lifts without
+        // animating its border colour — a border that changes on hover makes
+        // a grid of cards flicker as the pointer crosses it.
         interactive &&
-          'cursor-pointer transition-all duration-200 hover:-translate-y-0.5 hover:border-[var(--color-border-dark)] hover:shadow-md',
-        padded && 'p-5',
+          'cursor-pointer transition-[transform,box-shadow] duration-200 ease-out hover:-translate-y-px hover:shadow-md active:translate-y-0',
+        padded && 'p-5 lg:p-6',
         className
       )}
     >
       {accent && (
         <span
-          className="absolute inset-x-0 top-0 h-[3px]"
+          className="absolute inset-x-0 top-0 h-0.5"
           style={{ background: accent }}
           aria-hidden
         />
@@ -305,7 +338,7 @@ export function CardHeader({
       <div className="flex min-w-0 items-start gap-3">
         {icon && (
           <span
-            className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-[var(--color-border)] bg-[var(--color-surface-muted)] text-[var(--color-text-secondary)]"
+            className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-[var(--color-border)] bg-[var(--color-surface-muted)] text-[var(--color-text-secondary)] shadow-xs"
             aria-hidden
           >
             {icon}
@@ -313,7 +346,7 @@ export function CardHeader({
         )}
         <div className="min-w-0">
           {eyebrow && <div className="eyebrow mb-1">{eyebrow}</div>}
-          <h3 className="flex items-center gap-2 truncate">
+          <h3 className="flex items-center gap-2 truncate text-base font-semibold tracking-[-0.01em]">
             {accent && (
               <span
                 className="inline-block h-2 w-2 shrink-0 rounded-full ring-2"
@@ -363,38 +396,44 @@ export type BadgeTone =
   | 'info'
   | 'purple';
 
+// Tints are 10% rather than 8%: on the warm ground an 8% wash of a dark
+// hue all but vanished, so several badges were reading as plain text.
 const TONES: Record<BadgeTone, { bg: string; color: string; border: string }> = {
   neutral: {
     bg: 'var(--color-surface-sunken)',
     color: 'var(--color-text-secondary)',
-    border: 'var(--color-border)',
+    border: 'var(--color-border-dark)',
   },
   primary: {
-    bg: 'var(--color-primary-50)',
-    color: 'var(--color-primary-dark)',
-    border: 'var(--color-primary-100)',
+    bg: 'rgba(21, 107, 94, 0.10)',
+    color: 'var(--color-primary)',
+    border: 'rgba(21, 107, 94, 0.22)',
   },
   success: {
-    bg: 'var(--color-success-light)',
+    bg: 'rgba(42, 127, 76, 0.10)',
     color: 'var(--color-success)',
-    border: 'var(--color-success-border)',
+    border: 'rgba(42, 127, 76, 0.22)',
   },
   warning: {
-    bg: 'var(--color-warning-light)',
+    bg: 'rgba(153, 101, 13, 0.10)',
     color: 'var(--color-warning)',
-    border: 'var(--color-warning-border)',
+    border: 'rgba(153, 101, 13, 0.22)',
   },
   danger: {
-    bg: 'var(--color-danger-light)',
+    bg: 'rgba(192, 57, 43, 0.10)',
     color: 'var(--color-danger)',
-    border: 'var(--color-danger-border)',
+    border: 'rgba(192, 57, 43, 0.22)',
   },
   info: {
-    bg: 'var(--color-info-light)',
-    color: 'var(--color-info)',
-    border: 'var(--color-info-border)',
+    bg: 'rgba(60, 94, 147, 0.10)',
+    color: 'var(--color-secondary)',
+    border: 'rgba(60, 94, 147, 0.22)',
   },
-  purple: { bg: '#F3E8FF', color: '#6D28D9', border: '#DDD6FE' },
+  purple: {
+    bg: 'rgba(123, 79, 168, 0.10)',
+    color: '#7B4FA8',
+    border: 'rgba(123, 79, 168, 0.22)',
+  },
 };
 
 export function Badge({
@@ -416,8 +455,10 @@ export function Badge({
   return (
     <span
       className={cn(
-        'inline-flex items-center gap-1.5 whitespace-nowrap rounded-full border font-medium',
-        size === 'sm' ? 'px-1.5 py-px text-[0.625rem]' : 'px-2.5 py-0.5 text-[0.6875rem]',
+        // 6px radius, not a full pill. A row of pills down a status column
+        // reads as decoration; a row of small square-ish chips reads as data.
+        'inline-flex items-center gap-1.5 whitespace-nowrap rounded-md border font-[560]',
+        size === 'sm' ? 'px-1.5 py-0.5 text-[0.625rem]' : 'px-2 py-0.5 text-[0.6875rem]',
         className
       )}
       style={{
@@ -486,11 +527,11 @@ export function Callout({
 
   return (
     <div
-      className={cn('flex gap-3 rounded-xl border px-4 py-3', className)}
+      className={cn('flex gap-3.5 rounded-xl border px-4 py-3.5 shadow-xs', className)}
       style={{ background: map[0], borderColor: map[2] }}
     >
-      <span className="mt-px shrink-0" style={{ color: map[1] }} aria-hidden>
-        {icon ?? <Icon className="h-[18px] w-[18px]" />}
+      <span className="mt-0.5 shrink-0" style={{ color: map[1] }} aria-hidden>
+        {icon ?? <Icon className="h-5 w-5" />}
       </span>
       <div className="min-w-0 flex-1">
         {title && (
@@ -516,11 +557,19 @@ export function Callout({
    Form fields
    ═══════════════════════════════════════════════════════════════════════════ */
 
+// The 8px radius matches the buttons and the table corners; a 4px focus
+// halo was wide enough that adjacent fields in a two-column form overlapped
+// each other's rings, so it is 3px and tighter to the border.
+//
+// (A second, unreachable copy of this string used to sit below the
+// assignment — a dangling expression statement that TypeScript accepted and
+// nothing ever read. Removed.)
 const FIELD_BASE =
   'w-full rounded-lg border bg-[var(--color-surface)] px-3 text-[0.8125rem] text-[var(--color-text)] ' +
-  'placeholder:text-[var(--color-text-tertiary)] shadow-xs transition-all duration-150 ' +
-  'border-[var(--color-border-dark)] focus:border-primary-500 focus:outline-none ' +
-  'focus:ring-4 focus:ring-primary-600/10 disabled:bg-[var(--color-surface-muted)] disabled:opacity-70';
+  'placeholder:text-[var(--color-text-tertiary)] shadow-xs transition-[border-color,box-shadow] duration-150 ' +
+  'border-[var(--color-border-dark)] hover:border-[var(--color-border-strong)] ' +
+  'focus:border-primary-600 focus:outline-none focus:ring-[3px] focus:ring-primary-700/15 ' +
+  'disabled:bg-[var(--color-surface-muted)] disabled:opacity-70 disabled:hover:border-[var(--color-border-dark)]';
 
 export function Field({
   label,
@@ -578,7 +627,7 @@ export const Select = forwardRef<HTMLSelectElement, SelectHTMLAttributes<HTMLSel
         className={cn(FIELD_BASE, 'h-9.5 cursor-pointer appearance-none pr-9', className)}
         style={{
           backgroundImage:
-            "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3E%3Cpath stroke='%2394A3B8' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.6' d='m6 8 4 4 4-4'/%3E%3C/svg%3E\")",
+            "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3E%3Cpath stroke='%23B0ACA3' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.8' d='m6 8 4 4 4-4'/%3E%3C/svg%3E\")",
           backgroundRepeat: 'no-repeat',
           backgroundPosition: 'right 0.6rem center',
           backgroundSize: '1.1rem',
@@ -699,7 +748,7 @@ export function Modal({
             >
               <Dialog.Panel
                 className={cn(
-                  'w-full rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] shadow-xl',
+                  'w-full rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] shadow-xl',
                   widths[size]
                 )}
               >
@@ -832,7 +881,7 @@ export function EmptyState({
     <div className="flex flex-col items-center justify-center gap-2 px-6 py-16 text-center">
       {icon && (
         <div
-          className="mb-2 flex h-12 w-12 items-center justify-center rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface-muted)] text-[var(--color-text-tertiary)]"
+          className="mb-2 flex h-12 w-12 items-center justify-center rounded-xl border border-[var(--color-border)] bg-[var(--color-surface-muted)] text-[var(--color-text-tertiary)]"
           aria-hidden
         >
           {icon}

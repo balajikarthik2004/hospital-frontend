@@ -4,17 +4,23 @@
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="theme-color" content="#0E7490" media="(prefers-color-scheme: light)" />
-    <meta name="theme-color" content="#070C16" media="(prefers-color-scheme: dark)" />
+    <meta name="theme-color" content="#156B5E" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#121110" media="(prefers-color-scheme: dark)" />
     <meta
       name="description"
       content="SafeDischarge — multi-agent clinical discharge coordination. AI prepares the draft; clinicians decide."
     />
-    <title>SafeDischarge</title>
+    <title>SafeDischarge · Clinical Intelligence</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <!-- Plus Jakarta Sans is requested as a variable axis (400..800) rather
+         than as a handful of static cuts. The type scale leans on in-between
+         weights — 620 for a card title, 680 for a page title — which silently
+         rounded to the nearest static cut before, flattening the hierarchy.
+         Inter is gone: it was downloaded in full and never used, since Plus
+         Jakarta sits ahead of it in every font stack. -->
     <link
-      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Source+Serif+4:opsz,wght@8..60,400;8..60,500;8..60,600&family=JetBrains+Mono:wght@400;500&display=swap"
+      href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400..800&family=Source+Serif+4:opsz,wght@8..60,400;8..60,500;8..60,600&family=JetBrains+Mono:wght@400;500&display=swap"
       rel="stylesheet"
     />
     <script>
@@ -38,10 +44,10 @@
         content: '';
         position: fixed;
         inset: 0;
-        background: #f6f8fb;
+        background: #faf9f7;
       }
       html.dark #root:empty::after {
-        background: #070c16;
+        background: #100f0e;
       }
     </style>
   </head>

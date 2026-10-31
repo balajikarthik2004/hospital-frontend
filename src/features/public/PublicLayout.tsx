@@ -54,25 +54,29 @@ export function PublicLayout() {
 
   return (
     <div className="flex min-h-screen flex-col" style={{ background: 'var(--color-bg)' }}>
-      {/* ── Emergency bar. First thing on the page, on every page, because
-             someone in trouble should never have to navigate. ───────────── */}
+      {/* ── Emergency bar ──────────────────────────────────────────────
+          Commented out on request. The same guidance is still reachable
+          from the "Casualty" card on the home page, which carries the 108
+          number and the 24/7 hours.
+
       <div
-        className="px-4 py-1.5 text-center text-[0.75rem] font-medium"
-        style={{ background: 'var(--color-danger)', color: '#fff' }}
+        className="px-4 py-2 text-center text-[0.75rem] font-semibold shadow-xs"
+        style={{ background: 'linear-gradient(90deg, #DC2626 0%, #EF4444 50%, #B91C1C 100%)', color: '#fff' }}
       >
-        <span className="opacity-90">Medical emergency?</span>{' '}
-        <a href="tel:108" className="font-bold underline underline-offset-2">
+        <span className="opacity-95">Medical emergency?</span>{' '}
+        <a href="tel:108" className="font-bold underline underline-offset-2 hover:opacity-100">
           Call 108
         </a>{' '}
         <span className="opacity-90">
-          — or come straight to Casualty, open 24 hours. Do not book online.
+          — or come directly to Casualty (open 24/7). Do not book online.
         </span>
       </div>
+      ─────────────────────────────────────────────────────────────── */}
 
       <header
-        className="sticky top-0 z-40 border-b backdrop-blur"
+        className="sticky top-0 z-40 border-b backdrop-blur-xl"
         style={{
-          background: 'color-mix(in srgb, var(--color-surface) 88%, transparent)',
+          background: 'color-mix(in srgb, var(--color-surface) 84%, transparent)',
           borderColor: 'var(--color-border)',
         }}
       >
@@ -80,7 +84,7 @@ export function PublicLayout() {
           <Link to="/" className="flex min-w-0 items-center gap-2.5">
             <Logo size={32} />
             <span className="min-w-0">
-              <span className="block truncate text-[0.9375rem] font-semibold leading-tight tracking-[-0.015em]">
+              <span className="block truncate text-[0.9375rem] font-bold leading-tight tracking-tight">
                 Aarogya General Hospital
               </span>
               <span className="eyebrow block truncate text-[0.625rem]">
@@ -89,7 +93,7 @@ export function PublicLayout() {
             </span>
           </Link>
 
-          <nav className="ml-6 hidden items-center gap-1 md:flex" aria-label="Main">
+          <nav className="ml-6 hidden items-center gap-1.5 md:flex" aria-label="Main">
             {NAV.map((item) => (
               <NavLink
                 key={item.to}
@@ -97,9 +101,9 @@ export function PublicLayout() {
                 end={item.end}
                 className={({ isActive }) =>
                   cn(
-                    'rounded-lg px-3 py-2 text-[0.8125rem] font-medium transition-colors',
+                    'rounded-lg px-3.5 py-2 text-[0.8125rem] font-medium transition-colors duration-100',
                     isActive
-                      ? 'text-[var(--color-primary)]'
+                      ? 'bg-[var(--color-primary-50)] text-[var(--color-primary)] font-[620]'
                       : 'text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-muted)] hover:text-[var(--color-text)]'
                   )
                 }
@@ -109,7 +113,7 @@ export function PublicLayout() {
             ))}
           </nav>
 
-          <div className="ml-auto flex items-center gap-2">
+          <div className="ml-auto flex items-center gap-2.5">
             <a
               href="tel:+914440001200"
               className="hidden items-center gap-1.5 text-[0.8125rem] font-medium lg:flex"
@@ -123,7 +127,7 @@ export function PublicLayout() {
               type="button"
               onClick={toggle}
               aria-label={dark ? 'Switch to light theme' : 'Switch to dark theme'}
-              className="rounded-lg p-2 transition-colors hover:bg-[var(--color-surface-muted)]"
+              className="rounded-xl p-2 transition-colors hover:bg-[var(--color-surface-muted)]"
               style={{ color: 'var(--color-text-secondary)' }}
             >
               {dark ? <SunIcon className="h-5 w-5" /> : <MoonIcon className="h-5 w-5" />}
@@ -131,10 +135,9 @@ export function PublicLayout() {
 
             <Link
               to="/portal"
-              className="hidden rounded-lg border px-3 py-2 text-[0.8125rem] font-medium transition-colors sm:block"
+              className="hidden rounded-xl border border-[var(--color-border)] px-3.5 py-2 text-[0.8125rem] font-medium transition-all hover:bg-[var(--color-surface-muted)] sm:block shadow-xs"
               style={{
-                borderColor: 'var(--color-border-dark)',
-                color: 'var(--color-text-secondary)',
+                color: 'var(--color-text)',
               }}
             >
               Patient login
@@ -142,9 +145,7 @@ export function PublicLayout() {
 
             <Link
               to="/book"
-              className="rounded-lg px-3.5 py-2 text-[0.8125rem] font-semibold text-white shadow-sm transition-[filter]
-                         hover:brightness-110"
-              style={{ background: 'var(--color-primary)' }}
+              className="rounded-lg bg-primary-700 px-4 py-2 text-[0.8125rem] font-[620] text-white shadow-[inset_0_1px_0_0_rgb(255_255_255_/_0.16)] transition-colors duration-100 hover:bg-primary-600"
             >
               Book appointment
             </Link>

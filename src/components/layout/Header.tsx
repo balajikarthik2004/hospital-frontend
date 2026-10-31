@@ -27,8 +27,9 @@ export function Header({ onMenuClick }: { onMenuClick: () => void }) {
       className="no-print sticky top-0 z-30 flex h-16 items-center gap-3 border-b px-4 lg:px-6"
       style={{
         borderColor: 'var(--color-border)',
-        background: 'color-mix(in srgb, var(--color-surface) 82%, transparent)',
-        backdropFilter: 'saturate(180%) blur(12px)',
+        background: 'color-mix(in srgb, var(--color-surface) 84%, transparent)',
+        backdropFilter: 'saturate(180%) blur(16px)',
+        WebkitBackdropFilter: 'saturate(180%) blur(16px)',
       }}
     >
       <button
@@ -148,10 +149,10 @@ export function Header({ onMenuClick }: { onMenuClick: () => void }) {
 function LiveIndicator({ connected }: { connected: boolean }) {
   return (
     <span
-      className="mr-1 hidden items-center gap-1.5 rounded-full border px-2.5 py-1 text-[0.6875rem] font-medium sm:inline-flex"
+      className="mr-1 hidden items-center gap-2 rounded-full border px-3 py-1 text-[0.6875rem] font-semibold sm:inline-flex shadow-xs"
       style={{
-        background: connected ? 'var(--color-success-light)' : 'var(--color-surface-muted)',
-        borderColor: connected ? 'var(--color-success-border)' : 'var(--color-border)',
+        background: connected ? 'rgba(42, 127, 76, 0.10)' : 'var(--color-surface-muted)',
+        borderColor: connected ? 'rgba(42, 127, 76, 0.28)' : 'var(--color-border)',
         color: connected ? 'var(--color-success)' : 'var(--color-text-tertiary)',
       }}
       title={
@@ -160,7 +161,7 @@ function LiveIndicator({ connected }: { connected: boolean }) {
           : 'Not receiving live updates. Refresh to catch up.'
       }
     >
-      <span className="relative flex h-1.5 w-1.5" aria-hidden>
+      <span className="relative flex h-2 w-2" aria-hidden>
         {connected && (
           <span
             className="absolute inline-flex h-full w-full animate-ping rounded-full opacity-75"
@@ -168,11 +169,11 @@ function LiveIndicator({ connected }: { connected: boolean }) {
           />
         )}
         <span
-          className="relative inline-flex h-1.5 w-1.5 rounded-full"
+          className="relative inline-flex h-2 w-2 rounded-full"
           style={{ background: 'currentColor' }}
         />
       </span>
-      {connected ? 'Live' : 'Offline'}
+      {connected ? 'Live Sync' : 'Offline'}
     </span>
   );
 }
@@ -194,7 +195,7 @@ function PatientSearch() {
         (target.tagName === 'INPUT' ||
           target.tagName === 'TEXTAREA' ||
           target.isContentEditable);
-      if (e.key === '/' && !typing) {
+      if ((e.key === '/' || ((e.metaKey || e.ctrlKey) && e.key === 'k')) && !typing) {
         e.preventDefault();
         inputRef.current?.focus();
       }
@@ -224,8 +225,8 @@ function PatientSearch() {
   const noMatches = open && debounced.trim().length >= 2 && results.length === 0;
 
   return (
-    <div className="relative w-full max-w-sm">
-      <MagnifyingGlassIcon className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--color-text-tertiary)]" />
+    <div className="relative w-full max-w-md">
+      <MagnifyingGlassIcon className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--color-text-tertiary)]" />
       <input
         ref={inputRef}
         value={query}
@@ -235,22 +236,21 @@ function PatientSearch() {
         }}
         onFocus={() => setOpen(true)}
         onBlur={() => setTimeout(() => setOpen(false), 150)}
-        placeholder="Search patients…"
-        className="h-9 w-full rounded-lg border bg-[var(--color-surface-muted)] pl-9 pr-10 text-[0.8125rem] transition-all placeholder:text-[var(--color-text-tertiary)] focus:border-primary-500 focus:bg-[var(--color-surface)] focus:outline-none focus:ring-4 focus:ring-primary-600/10"
+        placeholder="Quick search patients (name, ID, diagnosis)..."
+        className="h-9.5 w-full rounded-lg border bg-[var(--color-surface-muted)] pl-10 pr-12 text-[0.8125rem] transition-[border-color,box-shadow,background-color] duration-150 placeholder:text-[var(--color-text-tertiary)] focus:border-primary-600 focus:bg-[var(--color-surface)] focus:outline-none focus:ring-[3px] focus:ring-primary-700/15"
         style={{ borderColor: 'var(--color-border)' }}
         aria-label="Search patients by name, ID or phone"
       />
       {!query && (
         <kbd
-          className="pointer-events-none absolute right-2.5 top-1/2 hidden -translate-y-1/2 rounded border px-1.5 py-0.5 font-mono text-[0.625rem] text-[var(--color-text-tertiary)] sm:block"
-          style={{ borderColor: 'var(--color-border-dark)' }}
+          className="pointer-events-none absolute right-2.5 top-1/2 hidden -translate-y-1/2 rounded-md border border-[var(--color-border)] bg-[var(--color-surface)] px-1.5 py-0.5 font-mono text-[0.625rem] font-semibold text-[var(--color-text-tertiary)] sm:block shadow-xs"
         >
-          /
+          ⌘K
         </kbd>
       )}
 
       {(results.length > 0 || noMatches) && open && (
-        <div className="absolute left-0 right-0 top-11 z-50 overflow-hidden rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] shadow-xl">
+        <div className="absolute left-0 right-0 top-12 z-50 overflow-hidden rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] shadow-2xl">
           {noMatches ? (
             <p className="px-4 py-5 text-center text-xs text-muted">
               No patient matches “{debounced}”.
@@ -260,21 +260,24 @@ function PatientSearch() {
               <button
                 key={p._id}
                 onMouseDown={() => {
-                  navigate(`/patients/${p._id}`);
+                  navigate(`/app/patients/${p._id}`);
                   setQuery('');
                   setResults([]);
                 }}
-                className="flex w-full items-center gap-3 border-b px-3 py-2.5 text-left transition-colors last:border-0 hover:bg-[var(--color-surface-muted)]"
+                className="flex w-full items-center gap-3 border-b px-4 py-3 text-left transition-colors last:border-0 hover:bg-[var(--color-surface-muted)]"
                 style={{ borderColor: 'var(--color-border)' }}
               >
-                <Avatar name={patientName(p)} size={28} color="var(--color-primary)" />
+                <Avatar name={patientName(p)} size={32} color="#1E7B6B" />
                 <span className="min-w-0 flex-1">
-                  <span className="block truncate text-[0.8125rem] font-medium">
+                  <span className="block truncate text-[0.8125rem] font-semibold">
                     {patientName(p)}
                   </span>
                   <span className="block truncate text-[0.6875rem] text-faint">
                     {p.patientId} · {patientAge(p)}y · {p.status.replace('_', ' ')}
                   </span>
+                </span>
+                <span className="shrink-0 text-xs font-semibold text-primary-600 dark:text-primary-400">
+                  Open →
                 </span>
               </button>
             ))

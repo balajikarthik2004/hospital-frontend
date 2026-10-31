@@ -482,7 +482,7 @@ function BedDetailModal({
                 <span className="font-mono">{patient.patientId}</span>
               </KeyValue>
             </dl>
-            <Link to={`/patients/${patient._id}`} onClick={onClose}>
+            <Link to={`/app/patients/${patient._id}`} onClick={onClose}>
               <Button size="sm" variant="outline" className="mt-3">
                 Open chart
               </Button>

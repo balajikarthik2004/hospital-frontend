@@ -6,6 +6,14 @@ import { LockClosedIcon } from '@heroicons/react/24/outline';
 import { useAuthStore } from '@/store/authStore';
 import type { Permission } from '@/types';
 
+import { PublicLayout } from '@/features/public/PublicLayout';
+import { HospitalHomePage } from '@/features/public/HospitalHomePage';
+import { DepartmentsPage } from '@/features/public/DepartmentsPage';
+import { FindDoctorPage } from '@/features/public/FindDoctorPage';
+import { VisitingPage } from '@/features/public/VisitingPage';
+import { BookAppointmentPage } from '@/features/public/BookAppointmentPage';
+import { PatientPortalPage } from '@/features/public/PatientPortalPage';
+
 import { LoginPage } from '@/features/auth/LoginPage';
 import { ProfilePage } from '@/features/auth/ProfilePage';
 import { DashboardPage } from '@/features/dashboard/DashboardPage';
@@ -20,6 +28,7 @@ import { DischargePackagePage } from '@/features/discharge/DischargePackagePage'
 import { AnalyticsPage } from '@/features/analytics/AnalyticsPage';
 import { AuditLogPage } from '@/features/audit/AuditLogPage';
 import { SettingsPage } from '@/features/settings/SettingsPage';
+import { DepartmentAdminPage } from '@/features/admin/DepartmentAdminPage';
 import { NotFoundPage } from '@/features/NotFoundPage';
 
 function RequireAuth({ children }: { children: React.ReactNode }) {
@@ -63,7 +72,7 @@ function RequirePermission({
       title="This area isn't open to your role"
       detail={`Signed in as ${user?.role.replace('_', ' ') ?? 'an unknown role'}. Someone with the right permission can show you what's here, or an administrator can change your access.`}
       action={
-        <Link to="/">
+        <Link to="/app">
           <Button variant="outline">Back to dashboard</Button>
         </Link>
       }
@@ -81,9 +90,23 @@ export default function App() {
   return (
     <BrowserRouter>
       <Routes>
+        {/* ═══ Public — the hospital's own website ═══════════════════════
+            The root belongs to the public, as it would for any real
+            hospital. The clinical application lives under /app. */}
+        <Route element={<PublicLayout />}>
+          <Route index element={<HospitalHomePage />} />
+          <Route path="departments" element={<DepartmentsPage />} />
+          <Route path="doctors" element={<FindDoctorPage />} />
+          <Route path="visiting" element={<VisitingPage />} />
+          <Route path="book" element={<BookAppointmentPage />} />
+          <Route path="portal" element={<PatientPortalPage />} />
+        </Route>
+
         <Route path="/login" element={<LoginPage />} />
 
+        {/* ═══ Staff — the clinical application ═════════════════════════ */}
         <Route
+          path="/app"
           element={
             <RequireAuth>
               <AppLayout />
@@ -143,10 +166,40 @@ export default function App() {
               </RequirePermission>
             }
           />
+          <Route
+            path="admin/departments"
+            element={
+              <RequirePermission permission="catalogue:manage">
+                <DepartmentAdminPage />
+              </RequirePermission>
+            }
+          />
           <Route path="settings" element={<SettingsPage />} />
           <Route path="profile" element={<ProfilePage />} />
           <Route path="*" element={<NotFoundPage />} />
         </Route>
+
+        {/* Bookmarks from before the website existed still land somewhere
+            useful rather than on a 404. */}
+        {[
+          'patients',
+          'admissions',
+          'beds',
+          'scheduling',
+          'discharge',
+          'analytics',
+          'audit',
+          'settings',
+          'profile',
+        ].map((path) => (
+          <Route
+            key={path}
+            path={`/${path}/*`}
+            element={<Navigate to={`/app/${path}`} replace />}
+          />
+        ))}
+
+        <Route path="*" element={<NotFoundPage />} />
       </Routes>
     </BrowserRouter>
   );
