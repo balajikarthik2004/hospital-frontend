@@ -3,6 +3,7 @@ import { Link, useSearchParams } from 'react-router-dom';
 import {
   ArrowLeftIcon,
   ArrowRightIcon,
+  CheckIcon,
   CheckCircleIcon,
   ExclamationTriangleIcon,
   PhoneIcon,
@@ -439,7 +440,11 @@ export function BookAppointmentPage() {
         </Callout>
       )}
 
-      <div className="mt-6">
+      {/* The step sits on its own sheet. A multi-step form rendered loose on
+          the page gives the controls no edge to sit against, so each step
+          reads as a different layout rather than as the same panel with new
+          contents in it. */}
+      <div className="mt-6 rounded-[14px] border border-[var(--color-border)] bg-[var(--color-surface)] p-5 shadow-sm lg:p-6">
         {step === 'who' && <WhoStep onNew={chooseNew} onReturning={chooseReturning} />}
 
         {step === 'identify' && (
@@ -538,38 +543,50 @@ function Stepper({
   if (!isLoggedIn && isNew === null) return null;
 
   return (
-    <ol className="mt-7 flex flex-wrap items-center gap-x-2 gap-y-2">
-      {flow.map((s, i) => (
-        <li key={s} className="flex items-center gap-2">
-          <span
-            className={cn(
-              'flex h-6 w-6 items-center justify-center rounded-full text-[0.6875rem] font-bold tabular',
-              i <= current ? 'text-white' : ''
-            )}
-            style={{
-              background: i <= current ? 'var(--color-primary)' : 'var(--color-surface-sunken)',
-              color: i <= current ? '#fff' : 'var(--color-text-tertiary)',
-            }}
-          >
-            {i + 1}
-          </span>
-          <span
-            className="text-[0.75rem] font-medium"
-            style={{
-              color: i <= current ? 'var(--color-text)' : 'var(--color-text-tertiary)',
-            }}
-          >
-            {LABELS[s]}
-          </span>
-          {i < flow.length - 1 && (
+    <ol className="mt-7 flex flex-wrap items-center gap-x-2 gap-y-2.5">
+      {flow.map((s, i) => {
+        const done = i < current;
+        const here = i === current;
+        return (
+          <li key={s} className="flex items-center gap-2">
+            {/* Done, here, and still to come need to be three states rather
+                than two. The old marker painted every step up to and
+                including the current one identically, so the number you were
+                actually on was the one thing the row did not show. */}
             <span
-              className="hidden h-px w-6 sm:block"
-              style={{ background: 'var(--color-border-dark)' }}
-              aria-hidden
-            />
-          )}
-        </li>
-      ))}
+              className={cn(
+                'flex h-6 w-6 items-center justify-center rounded-full text-[0.6875rem] font-[680] tabular',
+                here && 'ring-[3px] ring-primary-700/20'
+              )}
+              style={{
+                background: done || here ? 'var(--color-primary)' : 'var(--color-surface-sunken)',
+                color: done || here ? '#fff' : 'var(--color-text-tertiary)',
+              }}
+            >
+              {done ? <CheckIcon className="h-3.5 w-3.5 stroke-[3]" aria-hidden /> : i + 1}
+            </span>
+            <span
+              className="text-[0.75rem]"
+              style={{
+                color: here ? 'var(--color-text)' : 'var(--color-text-tertiary)',
+                fontWeight: here ? 620 : 500,
+              }}
+              aria-current={here ? 'step' : undefined}
+            >
+              {LABELS[s]}
+            </span>
+            {i < flow.length - 1 && (
+              <span
+                className="hidden h-px w-6 sm:block"
+                style={{
+                  background: done ? 'var(--color-primary)' : 'var(--color-border-dark)',
+                }}
+                aria-hidden
+              />
+            )}
+          </li>
+        );
+      })}
     </ol>
   );
 }
@@ -615,7 +632,7 @@ function ChoiceCard({
     <button
       type="button"
       onClick={onClick}
-      className="rounded-xl border p-5 text-left transition-all hover:-translate-y-0.5 hover:shadow-md"
+      className="rounded-xl border p-5 text-left transition-[transform,box-shadow,border-color] duration-200 ease-out hover:-translate-y-px hover:shadow-md"
       style={{ borderColor: 'var(--color-border)', background: 'var(--color-surface)' }}
     >
       <span
@@ -939,7 +956,7 @@ function DoctorStep({
               key={d._id}
               type="button"
               onClick={() => onPick(d)}
-              className="flex w-full flex-wrap items-start gap-4 rounded-xl border p-4 text-left transition-all hover:-translate-y-0.5 hover:shadow-md"
+              className="flex w-full flex-wrap items-start gap-4 rounded-xl border p-4 text-left transition-[transform,box-shadow,border-color] duration-200 ease-out hover:-translate-y-px hover:shadow-md"
               style={{
                 borderColor: 'var(--color-border)',
                 background: 'var(--color-surface)',

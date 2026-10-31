@@ -28,8 +28,10 @@ import { cn, groupBy, patientName, titleCase } from '@/lib/utils';
 import type { Bed, BedStatus, Patient } from '@/types';
 import { BED_PALETTE, WardFloorPlan } from './WardFloorPlan';
 
-/* Three.js is a heavy dependency, so the 3D ward is only fetched when someone
-   actually switches to it. The other two views cost nothing. */
+/* Three.js is a heavy dependency, so the 3D ward stays a separate chunk even
+   though it is now the default view: the page shell, the capacity figures and
+   the ward filter all paint while it is still arriving, instead of the whole
+   route waiting on it. */
 const Ward3DView = lazy(() => import('./Ward3D'));
 
 type View = 'plan' | 'grid' | '3d';
@@ -38,7 +40,7 @@ const STATUS_ORDER: BedStatus[] = ['available', 'occupied', 'reserved', 'mainten
 
 export function BedMapPage() {
   const [ward, setWard] = useState('');
-  const [view, setView] = useState<View>('plan');
+  const [view, setView] = useState<View>('3d');
   const [selected, setSelected] = useState<Bed | null>(null);
 
   const { data, loading, error, refetch } = useApi<{
@@ -85,22 +87,25 @@ export function BedMapPage() {
             <SegmentedControl<View>
               value={view}
               onChange={setView}
+              // Live ward sits first because it is the default; a segmented
+              // control whose selected item starts in the middle reads as
+              // though someone has already changed it.
               options={[
-                {
-                  value: 'plan',
-                  label: (
-                    <span className="flex items-center gap-1.5">
-                      <MapIcon className="h-3.5 w-3.5" />
-                      Floor plan
-                    </span>
-                  ),
-                },
                 {
                   value: '3d',
                   label: (
                     <span className="flex items-center gap-1.5">
                       <UserGroupIcon className="h-3.5 w-3.5" />
                       Live ward
+                    </span>
+                  ),
+                },
+                {
+                  value: 'plan',
+                  label: (
+                    <span className="flex items-center gap-1.5">
+                      <MapIcon className="h-3.5 w-3.5" />
+                      Floor plan
                     </span>
                   ),
                 },

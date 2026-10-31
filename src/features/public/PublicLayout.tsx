@@ -8,6 +8,7 @@ import {
   UserCircleIcon,
 } from '@heroicons/react/24/outline';
 import { Logo } from '@/components/common';
+import { BookingChat } from './BookingChat';
 import { cn } from '@/lib/utils';
 import { portalSession, portalToken, publicApi, type PortalPatient } from '@/lib/publicApi';
 
@@ -332,6 +333,13 @@ export function PublicLayout() {
           </div>
         </div>
       </footer>
+
+      {/* Mounted on the layout rather than on the home page, so a visitor who
+          has clicked through to Departments or Find a doctor — the two places
+          people most often stall — can still book without going back. It
+          keeps its own conversation in sessionStorage, so navigating between
+          those pages does not restart it. */}
+      <BookingChat />
     </div>
   );
 }

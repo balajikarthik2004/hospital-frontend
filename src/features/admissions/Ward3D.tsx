@@ -9,8 +9,15 @@ import {
 } from 'react';
 import { Canvas, useFrame, useThree, type ThreeEvent } from '@react-three/fiber';
 import { ContactShadows, Html, OrbitControls } from '@react-three/drei';
-import { DoubleSide, MOUSE } from 'three';
-import type { Group, Mesh } from 'three';
+import {
+  ACESFilmicToneMapping,
+  AdditiveBlending,
+  CanvasTexture,
+  DoubleSide,
+  MOUSE,
+  PCFSoftShadowMap,
+} from 'three';
+import type { Group, Mesh, Texture } from 'three';
 import { patientName } from '@/lib/utils';
 import type { Bed, BedStatus, Patient } from '@/types';
 
@@ -72,43 +79,48 @@ interface Palette {
   backdrop: string;
 }
 
+/* The ward is lit, so these are not the flat UI tokens — a pigment under a
+   key light reads lighter and more saturated than the same hex in a badge.
+   They are the app's warm neutrals shifted for that, which is also what
+   stops the ward looking like a blue screensaver bolted onto a warm app. */
 const LIGHT: Palette = {
-  floor: '#DBE3ED',
-  roomFloor: '#EDF2F8',
-  corridor: '#C8D4E2',
+  // Warm sheet vinyl, the flooring actually used on wards.
+  floor: '#E4E0D7',
+  roomFloor: '#F2EFE9',
+  corridor: '#D6D0C5',
   // Walls sit just off white: pure white blows out under the key light and
   // the rooms lose their edges.
-  wall: '#EFF4F9',
-  wallEdge: '#9FAFC4',
-  frame: '#79899E',
+  wall: '#F7F5F1',
+  wallEdge: '#B2ABA0',
+  frame: '#8A8278',
   linen: '#FFFFFF',
-  desk: '#E7EDF4',
-  chair: '#B9C6D6',
-  text: '#0F172A',
-  scrim: '#EEF3F9',
-  backdrop: '#F2F6FA',
+  desk: '#EBE7E0',
+  chair: '#C6BFB4',
+  text: '#1D1B19',
+  scrim: '#F4F2EE',
+  backdrop: '#FAF9F7',
 };
 
 const DARK: Palette = {
-  floor: '#0D1724',
-  roomFloor: '#192433',
-  corridor: '#101A28',
-  wall: '#1F2B3B',
-  wallEdge: '#3C4E66',
-  frame: '#5B6D85',
-  linen: '#3A4A5E',
-  desk: '#1F2B3B',
-  chair: '#2A3647',
-  text: '#E8EEF6',
-  scrim: '#0B1220',
-  backdrop: '#0B1220',
+  floor: '#1A1816',
+  roomFloor: '#262321',
+  corridor: '#141211',
+  wall: '#2C2926',
+  wallEdge: '#4A443D',
+  frame: '#6B645B',
+  linen: '#4A443D',
+  desk: '#2C2926',
+  chair: '#37322C',
+  text: '#F7F6F3',
+  scrim: '#100F0E',
+  backdrop: '#100F0E',
 };
 
 const STATUS_COLOR: Record<BedStatus, string> = {
-  available: '#10B981',
-  occupied: '#3B82F6',
-  reserved: '#F59E0B',
-  maintenance: '#8A99AD',
+  available: '#3DA66B',
+  occupied: '#4A74B0',
+  reserved: '#C2901F',
+  maintenance: '#8B8378',
 };
 
 const STATUS_LABEL: Record<BedStatus, string> = {
@@ -159,6 +171,64 @@ function useIsDark() {
     return () => observer.disconnect();
   }, []);
   return dark;
+}
+
+/* ── Light pools ──────────────────────────────────────────────────────────
+   Looking straight down, the thing that most says "this room is lit" is not
+   the shading on the walls — it is the pool each ceiling fixture throws on
+   the floor. Real lights would be the honest way to do that, but a ward is
+   fifteen-odd rooms and fifteen shadow-casting lights is not a frame budget
+   anyone should spend on a wall display.
+
+   So the pools are painted: one radial-gradient texture, built once, drawn
+   additively on a quad a few millimetres above the floor. From this camera
+   it is indistinguishable from the real thing, and it costs one draw call
+   per room. */
+function makePoolTexture(): CanvasTexture {
+  const size = 128;
+  const canvas = document.createElement('canvas');
+  canvas.width = canvas.height = size;
+  const ctx = canvas.getContext('2d')!;
+  const g = ctx.createRadialGradient(size / 2, size / 2, 0, size / 2, size / 2, size / 2);
+  // Falls off fast at first and then lingers — a hard core with a soft skirt,
+  // the way a recessed fixture actually lands on a floor. A plain linear
+  // ramp reads as a sticker.
+  g.addColorStop(0, 'rgba(255,255,255,0.85)');
+  g.addColorStop(0.35, 'rgba(255,255,255,0.40)');
+  g.addColorStop(0.7, 'rgba(255,255,255,0.10)');
+  g.addColorStop(1, 'rgba(255,255,255,0)');
+  ctx.fillStyle = g;
+  ctx.fillRect(0, 0, size, size);
+  return new CanvasTexture(canvas);
+}
+
+/** One ceiling fixture's pool on the floor. */
+function LightPool({
+  x,
+  z,
+  size,
+  texture,
+  opacity,
+}: {
+  x: number;
+  z: number;
+  size: number;
+  texture: Texture;
+  opacity: number;
+}) {
+  return (
+    <mesh position={[x, 0.014, z]} rotation={[-Math.PI / 2, 0, 0]} raycast={() => null}>
+      <planeGeometry args={[size, size]} />
+      <meshBasicMaterial
+        map={texture}
+        transparent
+        opacity={opacity}
+        blending={AdditiveBlending}
+        depthWrite={false}
+        toneMapped={false}
+      />
+    </mesh>
+  );
 }
 
 /* ═══ Layout ═══════════════════════════════════════════════════════════════ */
@@ -1365,6 +1435,44 @@ function BedsideMonitor({
   );
 }
 
+/**
+ * The bedside locker every bed on every ward has: a waist-high cabinet with
+ * a drawer and a jug of water on top. Read from above it is a small bright
+ * rectangle beside the bed, which is exactly the cue that stops a row of
+ * beds looking like a furniture showroom.
+ */
+function BedsideCabinet({ x, z, palette }: { x: number; z: number; palette: Palette }) {
+  return (
+    <group position={[x, 0, z]}>
+      <mesh position={[0, 0.3, 0]} castShadow receiveShadow>
+        <boxGeometry args={[0.42, 0.6, 0.42]} />
+        <meshStandardMaterial color={palette.desk} roughness={0.62} metalness={0.06} />
+      </mesh>
+      {/* Top surface, a shade lighter so the edge catches from overhead */}
+      <mesh position={[0, 0.605, 0]} castShadow>
+        <boxGeometry args={[0.45, 0.02, 0.45]} />
+        <meshStandardMaterial color={palette.linen} roughness={0.45} metalness={0.08} />
+      </mesh>
+      {/* Drawer pull */}
+      <mesh position={[0, 0.42, 0.212]} castShadow>
+        <boxGeometry args={[0.2, 0.02, 0.012]} />
+        <meshStandardMaterial color={palette.frame} roughness={0.3} metalness={0.85} />
+      </mesh>
+      {/* Water jug */}
+      <mesh position={[0.1, 0.68, -0.06]} castShadow>
+        <cylinderGeometry args={[0.055, 0.048, 0.13, 12]} />
+        <meshStandardMaterial
+          color="#DCE8F0"
+          roughness={0.18}
+          metalness={0.02}
+          transparent
+          opacity={0.82}
+        />
+      </mesh>
+    </group>
+  );
+}
+
 function IVStand({ x, z, palette }: { x: number; z: number; palette: Palette }) {
   return (
     <group position={[x, 0, z]}>
@@ -1452,23 +1560,31 @@ function BedModel({
         onSelect(bed);
       }}
     >
-      {/* Frame */}
+      {/* Frame. A hospital bed is powder-coated steel, so it takes a
+          specular hit off the key light; at metalness 0.15 it was reading as
+          moulded plastic, which is most of why the ward looked like a toy. */}
       <mesh position={[0, 0.3, 0]} castShadow receiveShadow>
         <boxGeometry args={[BED_W, 0.22, BED_L]} />
-        <meshStandardMaterial color={palette.frame} roughness={0.7} metalness={0.15} />
+        <meshStandardMaterial color={palette.frame} roughness={0.38} metalness={0.72} />
       </mesh>
 
-      {/* Legs */}
+      {/* Legs, on castors — polished chrome rather than painted. */}
       {[
         [-BED_W / 2 + 0.1, -BED_L / 2 + 0.12],
         [BED_W / 2 - 0.1, -BED_L / 2 + 0.12],
         [-BED_W / 2 + 0.1, BED_L / 2 - 0.12],
         [BED_W / 2 - 0.1, BED_L / 2 - 0.12],
       ].map(([lx, lz], i) => (
-        <mesh key={i} position={[lx, 0.1, lz]} castShadow>
-          <cylinderGeometry args={[0.035, 0.035, 0.2, 8]} />
-          <meshStandardMaterial color={palette.frame} roughness={0.5} metalness={0.3} />
-        </mesh>
+        <group key={i}>
+          <mesh position={[lx, 0.12, lz]} castShadow>
+            <cylinderGeometry args={[0.032, 0.032, 0.17, 10]} />
+            <meshStandardMaterial color={palette.frame} roughness={0.26} metalness={0.9} />
+          </mesh>
+          <mesh position={[lx, 0.035, lz]} castShadow>
+            <sphereGeometry args={[0.038, 10, 8]} />
+            <meshStandardMaterial color="#2E2B28" roughness={0.75} metalness={0.2} />
+          </mesh>
+        </group>
       ))}
 
       {/* Mattress */}
@@ -1546,8 +1662,30 @@ function BedModel({
       {/* Footboard */}
       <mesh position={[0, 0.48, BED_L / 2 + 0.02]} castShadow>
         <boxGeometry args={[BED_W, 0.34, 0.06]} />
-        <meshStandardMaterial color={palette.frame} roughness={0.6} metalness={0.1} />
+        <meshStandardMaterial color={palette.frame} roughness={0.42} metalness={0.55} />
       </mesh>
+
+      <BedsideCabinet x={BED_W / 2 + 0.34} z={0.5} palette={palette} />
+
+      {/* The over-bed table, parked across the lower half the way they are
+          left between meals. Two of the most recognisable objects on a ward
+          from above are this and the cabinet, and neither was here. */}
+      {patient && (
+        <group position={[0, 0, BED_L / 2 - 0.42]}>
+          <mesh position={[0, 0.79, 0]} castShadow receiveShadow>
+            <boxGeometry args={[BED_W + 0.16, 0.035, 0.42]} />
+            <meshStandardMaterial color="#C9B99C" roughness={0.55} metalness={0.05} />
+          </mesh>
+          <mesh position={[BED_W / 2 + 0.3, 0.4, 0]} castShadow>
+            <cylinderGeometry args={[0.028, 0.028, 0.78, 8]} />
+            <meshStandardMaterial color={palette.frame} roughness={0.26} metalness={0.9} />
+          </mesh>
+          <mesh position={[BED_W / 2 + 0.3, 0.02, 0]} castShadow>
+            <boxGeometry args={[0.34, 0.03, 0.3]} />
+            <meshStandardMaterial color={palette.frame} roughness={0.35} metalness={0.8} />
+          </mesh>
+        </group>
+      )}
 
       <BedsideMonitor
         x={BED_W / 2 + 0.3}
@@ -1812,17 +1950,42 @@ function Scene({
   const controlsRef = useRef<any>(null);
   const { boxes, placed, width, depth, deskW } = plan;
 
+  // One texture for every pool in the ward, disposed with the scene.
+  const pool = useMemo(() => makePoolTexture(), []);
+  useEffect(() => () => pool.dispose(), [pool]);
+
+  // A run of fixtures down the middle of the corridor, roughly one every
+  // three metres, centred so the ward does not end on a half-lit gap.
+  const corridorPools = useMemo(() => {
+    const spacing = 3.2;
+    const count = Math.max(1, Math.round(width / spacing));
+    const span = (count - 1) * spacing;
+    return Array.from({ length: count }, (_, i) => -span / 2 + i * spacing);
+  }, [width]);
+
+  // The pools are additive, so on a dark ward they do the lighting almost
+  // single-handedly and have to be stronger; on a light one the floor is
+  // already bright and the same value would blow it out.
+  const poolOpacity = palette.backdrop === DARK.backdrop ? 0.5 : 0.3;
+
   return (
     <>
       {/* Deliberately under-lit ambient: the shading is what gives the model
           its depth, and a bright fill flattens every wall into the floor.
           Looking straight down, the key light is also the only thing that
           tells you anything has height at all — hence the long shadows. */}
-      <ambientLight intensity={0.52} />
-      <hemisphereLight intensity={0.36} groundColor={palette.floor} />
+      <ambientLight intensity={0.34} />
+      {/* Cool overhead, warm bounce off the floor. Hospital fixtures are
+          cold and the floor is warm vinyl, and carrying both temperatures
+          is most of why a real ward photograph does not look monochrome. */}
+      <hemisphereLight
+        intensity={0.5}
+        color="#EAF2FF"
+        groundColor={palette.floor}
+      />
       <directionalLight
         position={[width * 0.3, 15, depth * 0.85]}
-        intensity={2.0}
+        intensity={1.7}
         castShadow
         shadow-mapSize={[2048, 2048]}
         shadow-camera-left={-width * 0.7}
@@ -1831,17 +1994,51 @@ function Scene({
         shadow-camera-bottom={-depth * 0.9}
         shadow-camera-far={48}
         shadow-bias={-0.0006}
+        shadow-normalBias={0.02}
+        shadow-radius={3}
+      />
+      {/* A dim fill from the opposite corner so the shadow side of a figure
+          is dark rather than black. One key light alone makes every person
+          read as a cut-out. */}
+      <directionalLight
+        position={[-width * 0.4, 9, -depth * 0.6]}
+        intensity={0.34}
+        color="#CFE0F5"
       />
 
       {/* Floor and corridor runner */}
       <mesh position={[0, 0, 0]} rotation={[-Math.PI / 2, 0, 0]} receiveShadow>
         <planeGeometry args={[width + 3, depth + 2.4]} />
-        <meshStandardMaterial color={palette.floor} roughness={1} />
+        {/* Sheet vinyl is sealed, not matte: dropping roughness off 1.0 lets
+            it catch the key light the way a mopped floor does. */}
+        <meshStandardMaterial color={palette.floor} roughness={0.72} metalness={0.04} />
       </mesh>
       <mesh position={[0, 0.006, 0]} rotation={[-Math.PI / 2, 0, 0]} receiveShadow>
         <planeGeometry args={[width + 3, CORRIDOR]} />
-        <meshStandardMaterial color={palette.corridor} roughness={1} />
+        <meshStandardMaterial color={palette.corridor} roughness={0.62} metalness={0.04} />
       </mesh>
+
+      {/* Ceiling fixtures: one pool per room, and a run down the corridor. */}
+      {boxes.map((box) => (
+        <LightPool
+          key={`pool-${box.isTop ? 't' : 'b'}-${box.roomNumber}`}
+          x={box.cx}
+          z={(box.zOuter + box.zInner) / 2}
+          size={ROOM_W * 1.15}
+          texture={pool}
+          opacity={poolOpacity}
+        />
+      ))}
+      {corridorPools.map((x) => (
+        <LightPool
+          key={`pool-c-${x}`}
+          x={x}
+          z={0}
+          size={CORRIDOR * 1.5}
+          texture={pool}
+          opacity={poolOpacity * 0.8}
+        />
+      ))}
 
       {boxes.map((box) => (
         <Room key={`${box.isTop ? 't' : 'b'}-${box.roomNumber}`} box={box} palette={palette} />
@@ -1977,10 +2174,20 @@ export default function Ward3DView({
     >
       <Canvas
         orthographic
-        shadows
-        dpr={[1, 1.75]}
+        // Soft shadows rather than hard-edged ones. From directly overhead
+        // the shadow *is* the depth cue, and a stair-stepped edge is the
+        // single thing that most makes a generated scene look generated.
+        shadows={{ type: PCFSoftShadowMap }}
+        dpr={[1, 2]}
         camera={{ position: [0, 42, 0.001], zoom: 40, near: 0.1, far: 120 }}
         gl={{ antialias: true, powerPreference: 'high-performance' }}
+        onCreated={({ gl }) => {
+          // Filmic response instead of a linear clip. Linen and the lit
+          // floor are the brightest things here and they were clipping to
+          // flat white, which is why they read as paper rather than fabric.
+          gl.toneMapping = ACESFilmicToneMapping;
+          gl.toneMappingExposure = 1.05;
+        }}
       >
         <Scene
           plan={plan}
