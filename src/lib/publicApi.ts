@@ -21,6 +21,32 @@ export const publicApi = axios.create({
    the browser being closed. */
 
 const PORTAL_KEY = 'safedischarge.portal';
+const PORTAL_PATIENT_KEY = 'safedischarge.portal.patient';
+
+export const portalSession = {
+  getPatient: (): PortalPatient | null => {
+    try {
+      const raw = sessionStorage.getItem(PORTAL_PATIENT_KEY);
+      return raw ? (JSON.parse(raw) as PortalPatient) : null;
+    } catch {
+      return null;
+    }
+  },
+  setPatient: (patient: PortalPatient | null) => {
+    try {
+      if (patient) {
+        sessionStorage.setItem(PORTAL_PATIENT_KEY, JSON.stringify(patient));
+      } else {
+        sessionStorage.removeItem(PORTAL_PATIENT_KEY);
+      }
+    } catch {
+      /* ignore */
+    }
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new Event('portal-session-changed'));
+    }
+  },
+};
 
 export const portalToken = {
   get: () => {
@@ -36,12 +62,19 @@ export const portalToken = {
     } catch {
       /* private mode — the session simply will not persist a reload */
     }
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new Event('portal-session-changed'));
+    }
   },
   clear: () => {
     try {
       sessionStorage.removeItem(PORTAL_KEY);
+      sessionStorage.removeItem(PORTAL_PATIENT_KEY);
     } catch {
       /* ignore */
+    }
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new Event('portal-session-changed'));
     }
   },
 };
@@ -104,6 +137,7 @@ export interface PublicDoctor {
     clinicStart: string;
     clinicEnd: string;
     slotMinutes: number;
+    bufferMinutes?: number;
     isBookable: boolean;
   };
 }
@@ -159,4 +193,4 @@ export interface PortalAppointment {
 }
 
 export const doctorName = (d: Pick<PublicDoctor, 'firstName' | 'lastName'>) =>
-  `Dr ${d.firstName} ${d.lastName}`;
+  `Dr ${d.firstName} ${d.lastName}`.trim();

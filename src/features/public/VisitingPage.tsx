@@ -16,7 +16,7 @@ export function VisitingPage() {
   return (
     <div className="mx-auto max-w-4xl px-4 py-12">
       <p className="eyebrow">Practical information</p>
-      <h1 className="mt-1.5 text-[1.875rem] tracking-[-0.02em]">Visiting the hospital</h1>
+      <h1 className="mt-1.5 text-[1.875rem] tracking-[-0.02em]">Contact us & Visiting</h1>
 
       <Callout tone="danger" className="mt-7">
         <p className="font-semibold">In an emergency, do not use this page.</p>

@@ -523,7 +523,7 @@ function DoctorModal({
     availableDays: p?.availableDays ?? [1, 2, 3, 4, 5],
     clinicStart: p?.clinicStart ?? '09:00',
     clinicEnd: p?.clinicEnd ?? '17:00',
-    slotMinutes: String(p?.slotMinutes ?? 30),
+    slotMinutes: String(p?.slotMinutes ?? 25),
     isBookable: p?.isBookable ?? false,
   });
   const [busy, setBusy] = useState(false);
@@ -551,7 +551,7 @@ function DoctorModal({
         availableDays: form.availableDays,
         clinicStart: form.clinicStart,
         clinicEnd: form.clinicEnd,
-        slotMinutes: Number(form.slotMinutes) || 30,
+        slotMinutes: Number(form.slotMinutes) || 25,
         isBookable: form.isBookable,
       });
       toast.success(`Dr ${doctor.lastName}'s profile updated`);

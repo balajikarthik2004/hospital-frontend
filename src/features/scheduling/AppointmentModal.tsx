@@ -47,7 +47,7 @@ export function AppointmentModal({
   const [doctorId, setDoctorId] = useState('');
   const [date, setDate] = useState(defaultDate ?? new Date().toISOString().slice(0, 10));
   const [time, setTime] = useState(defaultTime ?? '');
-  const [duration, setDuration] = useState(30);
+  const [duration, setDuration] = useState(25);
   const [location, setLocation] = useState('');
   const [reason, setReason] = useState('');
   const [notes, setNotes] = useState('');
@@ -207,7 +207,7 @@ export function AppointmentModal({
 
           <Field label="Duration">
             <Select value={duration} onChange={(e) => setDuration(Number(e.target.value))}>
-              {[15, 20, 30, 45, 60].map((d) => (
+              {[15, 20, 25, 30, 45, 60].map((d) => (
                 <option key={d} value={d}>
                   {d} minutes
                 </option>

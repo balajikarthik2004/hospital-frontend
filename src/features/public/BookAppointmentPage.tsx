@@ -13,7 +13,10 @@ import { Button, Callout, Field, Input, Select, Spinner, Textarea } from '@/comp
 import {
   doctorName,
   errorMessage,
+  portalSession,
+  portalToken,
   publicApi,
+  type PortalPatient,
   type PublicDoctor,
   type PublicSpecialty,
   type TriageResponse,
@@ -22,13 +25,10 @@ import { cn } from '@/lib/utils';
 import { iconFor } from './departmentIcons';
 
 /* ═══════════════════════════════════════════════════════════════════════════
-   Booking, for someone who has never used the hospital before.
+   Booking an appointment at Aarogya General Hospital.
 
-   The order of the steps is the point. We ask who they are first, because a
-   returning patient should never have to retype details we already hold; then
-   what is wrong, because that is what decides the department; and only then
-   who they see and when. Nothing is written to the server until the final
-   confirm, so abandoning halfway leaves no half-made chart behind.
+   If the patient is already logged in, we never ask them to identify again:
+   they go straight to selecting the doctor or entering their complaint.
    ═══════════════════════════════════════════════════════════════════════════ */
 
 type Step = 'who' | 'identify' | 'details' | 'symptoms' | 'doctor' | 'slot' | 'done';
@@ -79,8 +79,21 @@ export function BookAppointmentPage() {
   const [params] = useSearchParams();
   const preselected = params.get('specialty');
 
-  const [step, setStep] = useState<Step>('who');
-  const [isNew, setIsNew] = useState<boolean | null>(null);
+  const [patient, setPatient] = useState<PortalPatient | null>(() => portalSession.getPatient());
+  const [hasToken, setHasToken] = useState(() => Boolean(portalToken.get()));
+  const isLoggedIn = Boolean(hasToken || patient);
+
+  const [step, setStep] = useState<Step>(() => {
+    const loggedIn = Boolean(portalToken.get() || portalSession.getPatient());
+    if (loggedIn) {
+      return preselected ? 'doctor' : 'symptoms';
+    }
+    return 'who';
+  });
+  const [isNew, setIsNew] = useState<boolean | null>(() => {
+    const loggedIn = Boolean(portalToken.get() || portalSession.getPatient());
+    return loggedIn ? false : null;
+  });
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
@@ -93,9 +106,15 @@ export function BookAppointmentPage() {
     phone: '',
     email: '',
   });
-  const [identifier, setIdentifier] = useState('');
+  const [identifier, setIdentifier] = useState(() => {
+    const p = portalSession.getPatient();
+    return p?.patientId ?? '';
+  });
   const [returningDob, setReturningDob] = useState('');
-  const [verifiedName, setVerifiedName] = useState<string | null>(null);
+  const [verifiedName, setVerifiedName] = useState<string | null>(() => {
+    const p = portalSession.getPatient();
+    return p ? `${p.firstName} ${p.lastName ?? ''}`.trim() : null;
+  });
 
   // What is wrong
   const [complaint, setComplaint] = useState('');
@@ -113,7 +132,40 @@ export function BookAppointmentPage() {
   const [time, setTime] = useState('');
   const [booked, setBooked] = useState<Booked | null>(null);
 
-  const flow = isNew ? FLOW_NEW : FLOW_RETURNING;
+  useEffect(() => {
+    const token = portalToken.get();
+    setHasToken(Boolean(token));
+    if (token) {
+      const cached = portalSession.getPatient();
+      if (cached) {
+        setPatient(cached);
+        setVerifiedName(`${cached.firstName} ${cached.lastName ?? ''}`.trim());
+        setIdentifier(cached.patientId);
+        setIsNew(false);
+      } else {
+        publicApi
+          .get('/portal/me')
+          .then((res) => {
+            portalSession.setPatient(res.data.patient);
+            setPatient(res.data.patient);
+            setVerifiedName(
+              `${res.data.patient.firstName} ${res.data.patient.lastName ?? ''}`.trim()
+            );
+            setIdentifier(res.data.patient.patientId);
+            setIsNew(false);
+          })
+          .catch(() => {});
+      }
+    }
+  }, []);
+
+  const flow = isLoggedIn
+    ? preselected
+      ? (['doctor', 'slot'] as Step[])
+      : (['symptoms', 'doctor', 'slot'] as Step[])
+    : isNew
+    ? FLOW_NEW
+    : FLOW_RETURNING;
   const stepIndex = flow.indexOf(step);
 
   useEffect(() => {
@@ -142,9 +194,6 @@ export function BookAppointmentPage() {
     setBusy(true);
     setError(null);
     try {
-      // The portal login endpoint is the one that already checks identifier
-      // against date of birth, so booking reuses it rather than growing a
-      // second, subtly different matcher.
       const res = await publicApi.post<{ patient: { firstName: string; lastName: string } }>(
         '/portal/login',
         { identifier: identifier.trim(), dateOfBirth: returningDob }
@@ -161,13 +210,14 @@ export function BookAppointmentPage() {
   /* ── Step: symptoms → suggested department ──────────────────────────── */
 
   const patientAge = useMemo(() => {
+    if (patient?.age) return patient.age;
     const dob = isNew ? details.dateOfBirth : returningDob;
     if (!dob) return undefined;
     const d = new Date(dob);
     if (Number.isNaN(d.getTime())) return undefined;
     const diff = Date.now() - d.getTime();
     return Math.floor(diff / (365.25 * 24 * 3600 * 1000));
-  }, [isNew, details.dateOfBirth, returningDob]);
+  }, [patient?.age, isNew, details.dateOfBirth, returningDob]);
 
   const runTriage = async () => {
     setBusy(true);
@@ -202,9 +252,17 @@ export function BookAppointmentPage() {
       setDoctor(null);
       setOverrode(slug !== triage?.specialty);
       const named = specialties.find((s) => s.slug === slug);
-      setTriage((t) =>
-        t ? { ...t, specialty: slug, specialtyName: named?.name ?? slug } : t
-      );
+      const displayName = named?.name ?? slug.charAt(0).toUpperCase() + slug.slice(1);
+      setTriage((prev) => ({
+        specialty: slug,
+        specialtyName: displayName,
+        reason: named?.description ?? `Department: ${displayName}`,
+        confidence: 1,
+        matched: prev?.matched ?? [],
+        emergency: prev?.emergency ?? null,
+        alternatives: prev?.alternatives ?? [],
+        doctors: res.data.doctors,
+      }));
     } catch (err) {
       setError(errorMessage(err));
     } finally {
@@ -212,11 +270,13 @@ export function BookAppointmentPage() {
     }
   };
 
-  // Jumping straight in from a department card on the home page.
+  // Jumping straight in from a department card on the home page or departments page.
   useEffect(() => {
-    if (preselected && step === 'doctor' && !doctors.length) void switchSpecialty(preselected);
+    if (preselected && step === 'doctor' && (!doctors.length || triage?.specialty !== preselected)) {
+      void switchSpecialty(preselected);
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [preselected, step]);
+  }, [preselected, step, specialties]);
 
   /* ── Step: slots ────────────────────────────────────────────────────── */
 
@@ -264,7 +324,12 @@ export function BookAppointmentPage() {
     try {
       const res = await publicApi.post('/appointments', {
         isNewPatient: Boolean(isNew),
-        ...(isNew
+        ...(isLoggedIn
+          ? {
+              identifier: patient?.patientId ?? identifier.trim(),
+              ...(returningDob ? { dateOfBirth: returningDob } : {}),
+            }
+          : isNew
           ? {
               firstName: details.firstName.trim(),
               lastName: details.lastName.trim(),
@@ -313,12 +378,16 @@ export function BookAppointmentPage() {
   const back = () => {
     setError(null);
     const prev = flow[stepIndex - 1];
-    if (prev) setStep(prev);
+    if (prev) {
+      setStep(prev);
+    } else if (isLoggedIn && step === 'doctor' && preselected) {
+      setStep('symptoms');
+    }
   };
 
   /* ── Render ─────────────────────────────────────────────────────────── */
 
-  if (step === 'done' && booked) return <Confirmation booked={booked} />;
+  if (step === 'done' && booked) return <Confirmation booked={booked} isLoggedIn={isLoggedIn} />;
 
   return (
     <div className="mx-auto max-w-3xl px-4 py-10">
@@ -327,7 +396,27 @@ export function BookAppointmentPage() {
         About two minutes. Nothing is booked until you confirm at the end.
       </p>
 
-      <Stepper flow={flow} current={stepIndex} isNew={isNew} />
+      {isLoggedIn && (
+        <div className="mt-4 flex items-center justify-between gap-3 rounded-xl border border-primary-200 dark:border-primary-800 bg-primary-50/70 dark:bg-primary-950/40 px-4 py-3 text-xs text-primary-900 dark:text-primary-100 shadow-xs">
+          <div className="flex items-center gap-2.5">
+            <span className="flex h-6 w-6 items-center justify-center rounded-full bg-primary-700 text-[0.6875rem] font-bold text-white uppercase shadow-xs shrink-0">
+              {patient?.firstName ? patient.firstName[0] : 'C'}
+            </span>
+            <span>
+              Booking as <strong>{patient ? `${patient.firstName} ${patient.lastName ?? ''}`.trim() : 'Patient'}</strong>
+              {patient?.patientId && <span className="opacity-80"> ({patient.patientId})</span>}
+            </span>
+          </div>
+          <Link
+            to="/portal"
+            className="font-medium underline hover:text-primary-700 dark:hover:text-primary-300 whitespace-nowrap"
+          >
+            My Appointments
+          </Link>
+        </div>
+      )}
+
+      <Stepper flow={flow} current={stepIndex} isNew={isNew} isLoggedIn={isLoggedIn} />
 
       {triage?.emergency && (
         <Callout tone="danger" className="mt-6">
@@ -430,10 +519,12 @@ function Stepper({
   flow,
   current,
   isNew,
+  isLoggedIn,
 }: {
   flow: Step[];
   current: number;
   isNew: boolean | null;
+  isLoggedIn: boolean;
 }) {
   const LABELS: Record<Step, string> = {
     who: 'You',
@@ -444,7 +535,7 @@ function Stepper({
     slot: 'Time',
     done: 'Done',
   };
-  if (isNew === null) return null;
+  if (!isLoggedIn && isNew === null) return null;
 
   return (
     <ol className="mt-7 flex flex-wrap items-center gap-x-2 gap-y-2">
@@ -560,46 +651,44 @@ function IdentifyStep({
   busy: boolean;
   onVerify: () => void;
 }) {
-  const ready = identifier.trim().length >= 3 && dob !== '';
+  const ready = identifier.trim().length >= 3 && Boolean(dob);
   return (
-    <>
-      <h2 className="text-[1.125rem]">Let us find your record</h2>
-      <p className="mt-1.5 text-[0.875rem] text-muted">
-        We ask for your date of birth as well, so that nobody else can open your record
-        with just a phone number.
+    <form
+      onSubmit={(e) => {
+        e.preventDefault();
+        if (ready && !busy) onVerify();
+      }}
+      className="max-w-md space-y-4"
+    >
+      <h2 className="text-[1.125rem]">Find your hospital record</h2>
+      <p className="text-[0.875rem] text-muted">
+        Enter the patient ID from your discharge letter or appointment SMS, or the mobile
+        number you registered with.
       </p>
 
-      <div className="mt-5 grid gap-4 sm:grid-cols-2">
-        <Field
-          label="Patient ID or phone number"
-          required
-          hint="Your patient ID looks like PAT-20260130-0007."
-        >
-          <Input
-            value={identifier}
-            onChange={(e) => setIdentifier(e.target.value)}
-            placeholder="PAT-… or 98765 43210"
-            autoComplete="off"
-          />
-        </Field>
-        <Field label="Date of birth" required>
-          <Input type="date" value={dob} onChange={(e) => setDob(e.target.value)} />
-        </Field>
-      </div>
+      <Field label="Patient ID or mobile number" required>
+        <Input
+          value={identifier}
+          onChange={(e) => setIdentifier(e.target.value)}
+          placeholder="PAT-100234 or 9876543210"
+          autoFocus
+          autoComplete="username"
+        />
+      </Field>
 
-      <div className="mt-5 flex flex-wrap items-center gap-3">
-        <Button onClick={onVerify} disabled={!ready || busy}>
-          {busy ? 'Checking…' : 'Continue'}
-        </Button>
-        <Link
-          to="/portal"
-          className="text-[0.8125rem] font-medium"
-          style={{ color: 'var(--color-primary)' }}
-        >
-          Or go straight to my dashboard
-        </Link>
-      </div>
-    </>
+      <Field label="Date of birth" required hint="Used to confirm we have the right person.">
+        <Input
+          type="date"
+          value={dob}
+          onChange={(e) => setDob(e.target.value)}
+          max={toInputDate(new Date())}
+        />
+      </Field>
+
+      <Button type="submit" disabled={!ready || busy}>
+        {busy ? 'Looking up…' : 'Continue'}
+      </Button>
+    </form>
   );
 }
 
@@ -612,18 +701,23 @@ function DetailsStep({
   setDetails: (d: Details) => void;
   onNext: () => void;
 }) {
-  const set = (k: keyof Details) => (v: string) => setDetails({ ...details, [k]: v });
+  const set =
+    <K extends keyof Details>(k: K) =>
+    (v: Details[K]) =>
+      setDetails({ ...details, [k]: v });
+
   const ready =
-    details.firstName.trim() &&
-    details.lastName.trim() &&
-    details.dateOfBirth &&
-    details.phone.trim().replace(/\D/g, '').length >= 10;
+    details.firstName.trim().length > 0 &&
+    details.lastName.trim().length > 0 &&
+    Boolean(details.dateOfBirth) &&
+    details.phone.trim().length >= 10;
 
   return (
     <>
       <h2 className="text-[1.125rem]">Your details</h2>
-      <p className="mt-1.5 text-[0.875rem] text-muted">
-        This creates your hospital record. Please use the name on your ID.
+      <p className="mt-1 text-[0.875rem] text-muted">
+        We use this to register you before you arrive. Nothing is shared outside the
+        hospital.
       </p>
 
       <div className="mt-5 grid gap-4 sm:grid-cols-2">
@@ -631,6 +725,7 @@ function DetailsStep({
           <Input
             value={details.firstName}
             onChange={(e) => set('firstName')(e.target.value)}
+            placeholder="Priya"
             autoComplete="given-name"
           />
         </Field>
@@ -638,6 +733,7 @@ function DetailsStep({
           <Input
             value={details.lastName}
             onChange={(e) => set('lastName')(e.target.value)}
+            placeholder="Sharma"
             autoComplete="family-name"
           />
         </Field>
@@ -645,12 +741,12 @@ function DetailsStep({
           <Input
             type="date"
             value={details.dateOfBirth}
-            max={new Date().toISOString().slice(0, 10)}
             onChange={(e) => set('dateOfBirth')(e.target.value)}
+            max={toInputDate(new Date())}
           />
         </Field>
         <Field label="Gender">
-          <Select value={details.gender} onChange={(e) => set('gender')(e.target.value)}>
+          <Select value={details.gender} onChange={(e) => set('gender')(e.target.value as Details['gender'])}>
             <option value="">Prefer not to say</option>
             <option value="female">Female</option>
             <option value="male">Male</option>
@@ -857,7 +953,7 @@ function DoctorStep({
                 }}
               >
                 {d.firstName[0]}
-                {d.lastName[0]}
+                {d.lastName?.[0] ?? ''}
               </span>
               <span className="min-w-0 flex-1">
                 <span className="block text-[1rem] font-semibold">{doctorName(d)}</span>
@@ -883,7 +979,7 @@ function DoctorStep({
               </span>
               <ArrowRightIcon
                 className="h-4 w-4 shrink-0"
-                style={{ color: 'var(--color-primary)' }}
+                style={{ color: 'var(--color-text-tertiary)' }}
               />
             </button>
           ))}
@@ -906,46 +1002,60 @@ function SlotStep({
 }: {
   doctor: PublicDoctor;
   date: string;
-  onDate: (v: string) => void;
+  onDate: (d: string) => void;
   slots: { time: string; available: boolean }[];
   slotNote: string | null;
   time: string;
-  setTime: (v: string) => void;
+  setTime: (t: string) => void;
   busy: boolean;
   onConfirm: () => void;
 }) {
   const free = slots.filter((s) => s.available);
+  const days = doctor.doctorProfile?.availableDays ?? [1, 2, 3, 4, 5];
+
   return (
     <>
-      <h2 className="text-[1.125rem]">When would you like to come?</h2>
-      <p className="mt-1.5 text-[0.875rem] text-muted">
-        {doctorName(doctor)} · {doctor.department}
-      </p>
+      <div
+        className="rounded-xl border p-5"
+        style={{ borderColor: 'var(--color-border)', background: 'var(--color-surface)' }}
+      >
+        <p className="eyebrow">Consultation with</p>
+        <h2 className="mt-0.5 text-[1.25rem]">{doctorName(doctor)}</h2>
+        <p className="mt-1 text-[0.8125rem] text-muted">
+          {doctor.doctorProfile?.qualifications || doctor.department} · Clinic days:{' '}
+          {dayNames(days)}
+        </p>
+      </div>
 
       <Field
         className="mt-5 max-w-xs"
         label="Date"
-        hint={`Clinic days: ${dayNames(doctor.doctorProfile?.availableDays ?? [])}`}
+        hint="Only clinic days will show free appointments."
       >
         <Input
           type="date"
           value={date}
-          min={new Date().toISOString().slice(0, 10)}
+          min={toInputDate(new Date())}
           onChange={(e) => onDate(e.target.value)}
         />
       </Field>
 
       {busy ? (
-        <div className="flex justify-center py-10">
+        <div className="flex justify-center py-12">
           <Spinner size={22} />
         </div>
       ) : slotNote ? (
+        <Callout tone="info" className="mt-5">
+          {slotNote}
+        </Callout>
+      ) : slots.length === 0 ? (
         <Callout tone="warning" className="mt-5">
-          {slotNote} Please pick another date.
+          No slots are listed for this day. The doctor may be fully booked or off clinic.
+          Pick another date above.
         </Callout>
       ) : free.length === 0 ? (
         <Callout tone="warning" className="mt-5">
-          Every slot on this day is taken. Please try another date.
+          All slots for this day are taken. Please pick another date above.
         </Callout>
       ) : (
         <>
@@ -986,7 +1096,7 @@ function SlotStep({
   );
 }
 
-function Confirmation({ booked }: { booked: Booked }) {
+function Confirmation({ booked, isLoggedIn }: { booked: Booked; isLoggedIn: boolean }) {
   const when = new Date(booked.scheduledDate);
   return (
     <div className="mx-auto max-w-2xl px-4 py-14 text-center">
@@ -998,7 +1108,7 @@ function Confirmation({ booked }: { booked: Booked }) {
       </span>
       <h1 className="mt-5 text-[1.75rem] tracking-[-0.02em]">You are booked in</h1>
       <p className="mt-2 text-[0.9375rem] text-muted">
-        We have sent a confirmation to the number you gave us.
+        We have confirmed your appointment with {booked.doctorName}.
       </p>
 
       <div
@@ -1045,7 +1155,7 @@ function Confirmation({ booked }: { booked: Booked }) {
       >
         <p className="font-semibold text-[var(--color-text)]">Before you come</p>
         <ul className="mt-2 list-disc space-y-1 pl-5">
-          <li>Arrive 15 minutes early to complete registration.</li>
+          <li>Arrive 15 minutes early to complete check-in.</li>
           <li>Bring any photo ID, previous prescriptions and recent test reports.</li>
           <li>
             If you need to cancel, call{' '}
@@ -1059,10 +1169,10 @@ function Confirmation({ booked }: { booked: Booked }) {
 
       <div className="mt-7 flex flex-wrap justify-center gap-3">
         <Link to="/portal">
-          <Button>Go to my dashboard</Button>
+          <Button>Go to my appointments</Button>
         </Link>
-        <Link to="/">
-          <Button variant="outline">Back to the website</Button>
+        <Link to={isLoggedIn ? '/portal' : '/'}>
+          <Button variant="outline">{isLoggedIn ? 'Patient portal' : 'Back to the website'}</Button>
         </Link>
       </div>
     </div>

@@ -2,13 +2,14 @@ import { useEffect, useState } from 'react';
 import { Link, NavLink, Outlet, useLocation } from 'react-router-dom';
 import {
   Bars3Icon,
-  PhoneIcon,
   XMarkIcon,
   MoonIcon,
   SunIcon,
+  UserCircleIcon,
 } from '@heroicons/react/24/outline';
 import { Logo } from '@/components/common';
 import { cn } from '@/lib/utils';
+import { portalSession, portalToken, publicApi, type PortalPatient } from '@/lib/publicApi';
 
 /**
  * Chrome for everything a member of the public sees.
@@ -19,11 +20,17 @@ import { cn } from '@/lib/utils';
  * the other is a clinical workstation.
  */
 
-const NAV = [
+const PUBLIC_NAV = [
   { to: '/', label: 'Home', end: true },
   { to: '/departments', label: 'Departments' },
   { to: '/doctors', label: 'Find a doctor' },
-  { to: '/visiting', label: 'Visiting' },
+  { to: '/visiting', label: 'Contact us' },
+];
+
+const PATIENT_NAV = [
+  { to: '/departments', label: 'Departments' },
+  { to: '/portal', label: 'My Appointments', end: true },
+  { to: '/visiting', label: 'Contact us' },
 ];
 
 function useTheme() {
@@ -52,58 +59,82 @@ export function PublicLayout() {
   // page the visitor just asked for.
   useEffect(() => setMenuOpen(false), [location.pathname]);
 
+  const [patient, setPatient] = useState<PortalPatient | null>(() => portalSession.getPatient());
+  const [hasToken, setHasToken] = useState(() => Boolean(portalToken.get()));
+
+  useEffect(() => {
+    const syncSession = () => {
+      const token = portalToken.get();
+      setHasToken(Boolean(token));
+      if (token) {
+        const cached = portalSession.getPatient();
+        if (cached) {
+          setPatient(cached);
+        } else {
+          publicApi
+            .get('/portal/me')
+            .then((res) => {
+              portalSession.setPatient(res.data.patient);
+              setPatient(res.data.patient);
+            })
+            .catch(() => {
+              setPatient(null);
+            });
+        }
+      } else {
+        setPatient(null);
+      }
+    };
+
+    syncSession();
+    window.addEventListener('portal-session-changed', syncSession);
+    window.addEventListener('storage', syncSession);
+
+    return () => {
+      window.removeEventListener('portal-session-changed', syncSession);
+      window.removeEventListener('storage', syncSession);
+    };
+  }, [location.pathname]);
+
+  const isLoggedIn = Boolean(hasToken || patient);
+  const navItems = isLoggedIn ? PATIENT_NAV : PUBLIC_NAV;
+
   return (
     <div className="flex min-h-screen flex-col" style={{ background: 'var(--color-bg)' }}>
-      {/* ── Emergency bar ──────────────────────────────────────────────
-          Commented out on request. The same guidance is still reachable
-          from the "Casualty" card on the home page, which carries the 108
-          number and the 24/7 hours.
-
-      <div
-        className="px-4 py-2 text-center text-[0.75rem] font-semibold shadow-xs"
-        style={{ background: 'linear-gradient(90deg, #DC2626 0%, #EF4444 50%, #B91C1C 100%)', color: '#fff' }}
-      >
-        <span className="opacity-95">Medical emergency?</span>{' '}
-        <a href="tel:108" className="font-bold underline underline-offset-2 hover:opacity-100">
-          Call 108
-        </a>{' '}
-        <span className="opacity-90">
-          — or come directly to Casualty (open 24/7). Do not book online.
-        </span>
-      </div>
-      ─────────────────────────────────────────────────────────────── */}
-
       <header
         className="sticky top-0 z-40 border-b backdrop-blur-xl"
         style={{
-          background: 'color-mix(in srgb, var(--color-surface) 84%, transparent)',
+          background: 'color-mix(in srgb, var(--color-surface) 88%, transparent)',
           borderColor: 'var(--color-border)',
         }}
       >
-        <div className="mx-auto flex h-16 max-w-6xl items-center gap-3 px-4">
-          <Link to="/" className="flex min-w-0 items-center gap-2.5">
-            <Logo size={32} />
-            <span className="min-w-0">
-              <span className="block truncate text-[0.9375rem] font-bold leading-tight tracking-tight">
+        <div className="mx-auto flex h-20 max-w-7xl items-center justify-between gap-6 px-6 sm:px-8 lg:px-12">
+          <Link
+            to={isLoggedIn ? '/portal' : '/'}
+            className="flex shrink-0 items-center gap-3.5 transition-opacity hover:opacity-95"
+          >
+            <Logo size={36} />
+            <div className="flex flex-col justify-center shrink-0">
+              <span className="whitespace-nowrap text-[0.9375rem] sm:text-base font-bold leading-tight tracking-tight text-[var(--color-text)]">
                 Aarogya General Hospital
               </span>
-              <span className="eyebrow block truncate text-[0.625rem]">
+              <span className="eyebrow whitespace-nowrap text-[0.6875rem] font-medium tracking-wider text-[var(--color-text-muted)]">
                 Multi-speciality care
               </span>
-            </span>
+            </div>
           </Link>
 
-          <nav className="ml-6 hidden items-center gap-1.5 md:flex" aria-label="Main">
-            {NAV.map((item) => (
+          <nav className="hidden lg:flex items-center gap-2 xl:gap-4 shrink-0" aria-label="Main">
+            {navItems.map((item) => (
               <NavLink
                 key={item.to}
                 to={item.to}
                 end={item.end}
                 className={({ isActive }) =>
                   cn(
-                    'rounded-lg px-3.5 py-2 text-[0.8125rem] font-medium transition-colors duration-100',
+                    'whitespace-nowrap shrink-0 rounded-lg px-4 py-2 text-[0.875rem] font-medium transition-colors duration-150',
                     isActive
-                      ? 'bg-[var(--color-primary-50)] text-[var(--color-primary)] font-[620]'
+                      ? 'bg-[var(--color-primary-50)] text-[var(--color-primary)] font-semibold'
                       : 'text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-muted)] hover:text-[var(--color-text)]'
                   )
                 }
@@ -113,39 +144,38 @@ export function PublicLayout() {
             ))}
           </nav>
 
-          <div className="ml-auto flex items-center gap-2.5">
-            <a
-              href="tel:+914440001200"
-              className="hidden items-center gap-1.5 text-[0.8125rem] font-medium lg:flex"
-              style={{ color: 'var(--color-text-secondary)' }}
-            >
-              <PhoneIcon className="h-4 w-4" />
-              +91 44 4000 1200
-            </a>
-
+          <div className="flex items-center gap-3 sm:gap-4 lg:gap-5 shrink-0">
             <button
               type="button"
               onClick={toggle}
               aria-label={dark ? 'Switch to light theme' : 'Switch to dark theme'}
-              className="rounded-xl p-2 transition-colors hover:bg-[var(--color-surface-muted)]"
-              style={{ color: 'var(--color-text-secondary)' }}
+              className="rounded-xl p-2.5 text-[var(--color-text-secondary)] transition-colors hover:bg-[var(--color-surface-muted)] shrink-0"
             >
               {dark ? <SunIcon className="h-5 w-5" /> : <MoonIcon className="h-5 w-5" />}
             </button>
 
-            <Link
-              to="/portal"
-              className="hidden rounded-xl border border-[var(--color-border)] px-3.5 py-2 text-[0.8125rem] font-medium transition-all hover:bg-[var(--color-surface-muted)] sm:block shadow-xs"
-              style={{
-                color: 'var(--color-text)',
-              }}
-            >
-              Patient login
-            </Link>
+            {isLoggedIn ? (
+              <Link
+                to="/portal"
+                title={patient ? `${patient.firstName} ${patient.lastName ?? ''}`.trim() : 'Patient Portal'}
+                aria-label={patient ? `Profile: ${patient.firstName}` : 'Patient profile'}
+                className="flex h-10 w-10 items-center justify-center rounded-full bg-primary-700 text-white font-bold text-sm shadow-xs transition-transform hover:scale-105 hover:bg-primary-800 focus:outline-none focus:ring-2 focus:ring-primary-600 focus:ring-offset-2 shrink-0 uppercase cursor-pointer"
+              >
+                {patient?.firstName ? patient.firstName[0] : 'C'}
+              </Link>
+            ) : (
+              <Link
+                to="/portal"
+                className="hidden sm:inline-flex items-center gap-1.5 rounded-xl border border-[var(--color-border)] px-4 py-2 text-[0.8125rem] font-medium text-[var(--color-text)] transition-all hover:bg-[var(--color-surface-muted)] shadow-xs whitespace-nowrap shrink-0"
+              >
+                <UserCircleIcon className="h-4 w-4 text-[var(--color-text-secondary)]" />
+                <span>Patient login</span>
+              </Link>
+            )}
 
             <Link
               to="/book"
-              className="rounded-lg bg-primary-700 px-4 py-2 text-[0.8125rem] font-[620] text-white shadow-[inset_0_1px_0_0_rgb(255_255_255_/_0.16)] transition-colors duration-100 hover:bg-primary-600"
+              className="whitespace-nowrap shrink-0 rounded-xl bg-primary-700 px-4 py-2.5 text-[0.8125rem] font-semibold text-white shadow-xs transition-colors duration-150 hover:bg-primary-600 focus:outline-none focus:ring-2 focus:ring-primary-600 focus:ring-offset-2"
             >
               Book appointment
             </Link>
@@ -155,31 +185,64 @@ export function PublicLayout() {
               onClick={() => setMenuOpen((o) => !o)}
               aria-label="Menu"
               aria-expanded={menuOpen}
-              className="rounded-lg p-2 md:hidden"
-              style={{ color: 'var(--color-text-secondary)' }}
+              className="rounded-xl p-2 text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-muted)] lg:hidden shrink-0"
             >
-              {menuOpen ? <XMarkIcon className="h-5 w-5" /> : <Bars3Icon className="h-5 w-5" />}
+              {menuOpen ? <XMarkIcon className="h-6 w-6" /> : <Bars3Icon className="h-6 w-6" />}
             </button>
           </div>
         </div>
 
         {menuOpen && (
           <nav
-            className="border-t px-4 py-2 md:hidden"
+            className="border-t px-6 py-4 lg:hidden flex flex-col gap-2 bg-[var(--color-surface)] shadow-lg"
             style={{ borderColor: 'var(--color-border)' }}
-            aria-label="Main"
+            aria-label="Mobile Navigation"
           >
-            {[...NAV, { to: '/portal', label: 'Patient login', end: false }].map((item) => (
+            {navItems.map((item) => (
               <NavLink
                 key={item.to}
                 to={item.to}
                 end={item.end}
-                className="block rounded-lg px-3 py-2.5 text-[0.875rem] font-medium"
-                style={{ color: 'var(--color-text-secondary)' }}
+                className={({ isActive }) =>
+                  cn(
+                    'block rounded-xl px-4 py-2.5 text-[0.9375rem] font-medium transition-colors',
+                    isActive
+                      ? 'bg-[var(--color-primary-50)] text-[var(--color-primary)] font-semibold'
+                      : 'text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-muted)]'
+                  )
+                }
               >
                 {item.label}
               </NavLink>
             ))}
+
+            <div className="pt-3 mt-1 border-t flex flex-col gap-2.5" style={{ borderColor: 'var(--color-border)' }}>
+              <Link
+                to="/portal"
+                className="flex items-center justify-between rounded-xl px-4 py-2.5 text-[0.9375rem] font-medium border border-[var(--color-border)] hover:bg-[var(--color-surface-muted)]"
+              >
+                <span className="flex items-center gap-2.5">
+                  {isLoggedIn ? (
+                    <>
+                      <span className="flex h-6 w-6 items-center justify-center rounded-full bg-primary-700 text-[0.6875rem] font-bold text-white uppercase shrink-0">
+                        {patient?.firstName ? patient.firstName[0] : 'P'}
+                      </span>
+                      <span className="font-semibold text-[var(--color-text)]">
+                        {patient ? `${patient.firstName} ${patient.lastName ?? ''}`.trim() : 'Patient Portal'}
+                      </span>
+                    </>
+                  ) : (
+                    <>
+                      <UserCircleIcon className="h-5 w-5 text-[var(--color-text-secondary)]" />
+                      <span>Patient login</span>
+                    </>
+                  )}
+                </span>
+                <span className="text-xs text-[var(--color-text-muted)] font-normal">
+                  {isLoggedIn ? 'Dashboard' : 'Sign in'}
+                </span>
+              </Link>
+            </div>
           </nav>
         )}
       </header>

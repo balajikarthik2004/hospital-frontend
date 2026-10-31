@@ -1,4 +1,5 @@
-import { Link } from 'react-router-dom';
+import { useEffect, useState } from 'react';
+import { Link, Navigate } from 'react-router-dom';
 import {
   ArrowRightIcon,
   BeakerIcon,
@@ -9,7 +10,7 @@ import {
 } from '@heroicons/react/24/outline';
 import { iconFor } from './departmentIcons';
 import { useApi } from '@/hooks/useApi';
-import { publicApi, type HospitalInfo, type PublicSpecialty } from '@/lib/publicApi';
+import { portalToken, publicApi, type HospitalInfo, type PublicSpecialty } from '@/lib/publicApi';
 import { Spinner } from '@/components/common';
 
 /**
@@ -52,6 +53,21 @@ function usePublic<T>(path: string) {
 }
 
 export function HospitalHomePage() {
+  const [hasToken, setHasToken] = useState(() => Boolean(portalToken.get()));
+
+  useEffect(() => {
+    const check = () => setHasToken(Boolean(portalToken.get()));
+    window.addEventListener('portal-session-changed', check);
+    window.addEventListener('storage', check);
+    return () => {
+      window.removeEventListener('portal-session-changed', check);
+      window.removeEventListener('storage', check);
+    };
+  }, []);
+
+  if (hasToken) {
+    return <Navigate to="/portal" replace />;
+  }
   const { data: info } = usePublic<HospitalInfo>('/hospital');
   const { data: deptData, loading } = usePublic<{ specialties: PublicSpecialty[] }>(
     '/specialties'

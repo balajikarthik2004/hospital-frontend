@@ -9,6 +9,7 @@ import {
 import { Badge, Button, Callout, Field, Input, Spinner } from '@/components/common';
 import {
   errorMessage,
+  portalSession,
   portalToken,
   publicApi,
   setPortalExpiredHandler,
@@ -27,7 +28,7 @@ import {
  */
 export function PatientPortalPage() {
   const [token, setToken] = useState<string | null>(() => portalToken.get());
-  const [patient, setPatient] = useState<PortalPatient | null>(null);
+  const [patient, setPatient] = useState<PortalPatient | null>(() => portalSession.getPatient());
   const [upcoming, setUpcoming] = useState<PortalAppointment[]>([]);
   const [past, setPast] = useState<PortalAppointment[]>([]);
   const [loading, setLoading] = useState(Boolean(portalToken.get()));
@@ -59,6 +60,7 @@ export function PatientPortalPage() {
     try {
       const res = await publicApi.get('/portal/me');
       setPatient(res.data.patient);
+      portalSession.setPatient(res.data.patient);
       setUpcoming(res.data.appointments.upcoming);
       setPast(res.data.appointments.past);
     } catch (err) {
@@ -78,8 +80,12 @@ export function PatientPortalPage() {
     return (
       <PortalLogin
         expired={expired}
-        onSignedIn={(t) => {
+        onSignedIn={(t, p) => {
           portalToken.set(t);
+          if (p) {
+            portalSession.setPatient(p);
+            setPatient(p);
+          }
           setExpired(false);
           setToken(t);
         }}
@@ -247,7 +253,7 @@ function PortalLogin({
   onSignedIn,
 }: {
   expired: boolean;
-  onSignedIn: (token: string) => void;
+  onSignedIn: (token: string, patient?: PortalPatient) => void;
 }) {
   const [identifier, setIdentifier] = useState('');
   const [dob, setDob] = useState('');
@@ -259,11 +265,12 @@ function PortalLogin({
     setBusy(true);
     setError(null);
     try {
-      const res = await publicApi.post<{ token: string }>('/portal/login', {
+      const res = await publicApi.post<{ token: string; patient: PortalPatient }>('/portal/login', {
         identifier: identifier.trim(),
         dateOfBirth: dob,
       });
-      onSignedIn(res.data.token);
+      portalSession.setPatient(res.data.patient);
+      onSignedIn(res.data.token, res.data.patient);
     } catch (err) {
       setError(errorMessage(err));
     } finally {
