@@ -14,7 +14,7 @@ import { api } from '@/lib/api';
 import { useApi, useMutation } from '@/hooks/useApi';
 import { useDebounce } from '@/hooks/useDebounce';
 import { toast } from '@/store/notificationStore';
-import { cn, patientAge, patientName } from '@/lib/utils';
+import { cn, localDateKey, patientAge, patientName } from '@/lib/utils';
 import type { AppointmentType, Patient, User } from '@/types';
 
 const TYPES: { value: AppointmentType; label: string }[] = [
@@ -45,7 +45,7 @@ export function AppointmentModal({
   const [type, setType] = useState<AppointmentType>('follow_up');
   const [specialty, setSpecialty] = useState('');
   const [doctorId, setDoctorId] = useState('');
-  const [date, setDate] = useState(defaultDate ?? new Date().toISOString().slice(0, 10));
+  const [date, setDate] = useState(defaultDate ?? localDateKey());
   const [time, setTime] = useState(defaultTime ?? '');
   const [duration, setDuration] = useState(25);
   const [location, setLocation] = useState('');
@@ -74,7 +74,7 @@ export function AppointmentModal({
   useEffect(() => {
     if (open) {
       setPatientId(defaultPatientId ?? '');
-      setDate(defaultDate ?? new Date().toISOString().slice(0, 10));
+      setDate(defaultDate ?? localDateKey());
       setTime(defaultTime ?? '');
     }
   }, [open, defaultPatientId, defaultDate, defaultTime]);
@@ -219,7 +219,7 @@ export function AppointmentModal({
             <Input
               type="date"
               value={date}
-              min={new Date().toISOString().slice(0, 10)}
+              min={localDateKey()}
               onChange={(e) => {
                 setDate(e.target.value);
                 setTime('');

@@ -202,49 +202,64 @@ function AppointmentRow({
           : 'info';
 
   return (
+    // One layout at every width: the date tile on the left, who and why
+    // beside it, and when along the bottom. The old row wrapped the time and
+    // status into a third column that crushed the doctor's name on a phone.
     <li
-      className="flex flex-wrap items-center gap-4 rounded-xl border p-4"
+      className="overflow-hidden rounded-xl border shadow-xs"
       style={{
         borderColor: 'var(--color-border)',
         background: 'var(--color-surface)',
         opacity: muted ? 0.75 : 1,
       }}
     >
-      <div
-        className="flex h-14 w-14 shrink-0 flex-col items-center justify-center rounded-lg"
-        style={{ background: 'var(--color-surface-sunken)' }}
-      >
-        <span className="text-[1.125rem] font-semibold leading-none tabular">
-          {when.getDate()}
-        </span>
-        <span className="mt-0.5 text-[0.6875rem] uppercase tracking-wide text-faint">
-          {when.toLocaleDateString(undefined, { month: 'short' })}
-        </span>
-      </div>
+      <div className="flex gap-4 p-4">
+        <div
+          className="flex h-16 w-14 shrink-0 flex-col items-center justify-center rounded-lg border"
+          style={{
+            background: 'var(--color-primary-50)',
+            borderColor: 'color-mix(in srgb, var(--color-primary) 18%, transparent)',
+          }}
+        >
+          <span className="text-[0.625rem] font-semibold uppercase tracking-wide text-[var(--color-primary)]">
+            {when.toLocaleDateString(undefined, { weekday: 'short' })}
+          </span>
+          <span className="text-[1.25rem] font-bold leading-tight tabular">{when.getDate()}</span>
+          <span className="text-[0.625rem] uppercase tracking-wide text-faint">
+            {when.toLocaleDateString(undefined, { month: 'short' })}
+          </span>
+        </div>
 
-      <div className="min-w-0 flex-1">
-        <p className="text-[0.9375rem] font-semibold">
-          {a.doctorId ? `Dr ${a.doctorId.firstName} ${a.doctorId.lastName}` : 'Doctor to be assigned'}
-        </p>
-        <p className="mt-0.5 text-[0.8125rem] text-muted">
-          {a.doctorId?.department || a.specialty || 'General'}
-        </p>
-        {a.reason && (
-          <p className="mt-1 truncate text-[0.8125rem] text-faint" title={a.reason}>
-            {a.reason}
+        <div className="min-w-0 flex-1">
+          <div className="flex items-start justify-between gap-3">
+            <p className="text-[0.9375rem] font-semibold leading-snug">
+              {a.doctorId ? `Dr ${a.doctorId.firstName} ${a.doctorId.lastName}` : 'Doctor to be assigned'}
+            </p>
+            <Badge tone={tone as never} className="shrink-0 capitalize">
+              {a.status}
+            </Badge>
+          </div>
+          <p className="mt-0.5 text-[0.8125rem] text-muted">
+            {a.doctorId?.department || a.specialty || 'General'}
           </p>
-        )}
+          {a.reason && (
+            <p className="mt-1.5 line-clamp-2 text-[0.8125rem] leading-relaxed text-faint" title={a.reason}>
+              {a.reason}
+            </p>
+          )}
+        </div>
       </div>
 
-      <div className="flex items-center gap-3">
-        <span className="inline-flex items-center gap-1.5 text-[0.875rem] font-medium tabular">
+      <div
+        className="flex items-center justify-between gap-3 border-t px-4 py-2.5"
+        style={{ borderColor: 'var(--color-border)', background: 'var(--color-surface-muted)' }}
+      >
+        <span className="inline-flex items-center gap-1.5 text-[0.8125rem] font-semibold tabular">
           <ClockIcon className="h-4 w-4" style={{ color: 'var(--color-text-tertiary)' }} />
           {a.scheduledTime}
         </span>
-        <Badge tone={tone as never}>{a.status}</Badge>
+        <span className="truncate font-mono text-[0.6875rem] text-faint">{a.appointmentId}</span>
       </div>
-
-      <p className="w-full text-[0.75rem] text-faint">{a.appointmentId}</p>
     </li>
   );
 }

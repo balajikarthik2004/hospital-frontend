@@ -368,7 +368,15 @@ export function BookAppointmentPage() {
       });
       setStep('done');
     } catch (err) {
-      setError(errorMessage(err));
+      // A signed-in patient never typed a date of birth, so a failed lookup
+      // here means the portal session expired, not that the details are wrong.
+      const msg = errorMessage(err);
+      if (isLoggedIn && !returningDob && /could not match/i.test(msg)) {
+        portalToken.clear();
+        setError('Your patient portal session has expired. Please sign in again to finish booking.');
+        return;
+      }
+      setError(msg);
       // Almost always "someone just took that slot", so refresh the grid.
       if (doctor && date) void loadSlots(doctor._id, date);
     } finally {

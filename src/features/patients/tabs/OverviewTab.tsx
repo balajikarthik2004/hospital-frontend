@@ -1,3 +1,4 @@
+import { HeartIcon, HomeModernIcon } from '@heroicons/react/24/outline';
 import { Badge, Card, CardHeader, EmptyState } from '@/components/common';
 import {
   VITAL_RANGES,
@@ -41,7 +42,12 @@ export function OverviewTab({
       <Card className="lg:col-span-2">
         <CardHeader title="Current admission" />
         {!activeAdmission ? (
-          <EmptyState title="Not currently admitted" detail={`Status: ${titleCase(patient.status)}`} />
+          <EmptyState
+            compact
+            icon={<HomeModernIcon className="h-5 w-5" />}
+            title="Not currently admitted"
+            detail={`Status: ${titleCase(patient.status)}. The ward, care team and risk score appear here once they are admitted.`}
+          />
         ) : (
           <div className="space-y-4">
             <div>
@@ -109,7 +115,12 @@ export function OverviewTab({
           subtitle={latest ? fmtRelative(latest.timestamp) : 'None recorded'}
         />
         {!latest ? (
-          <EmptyState title="No vitals recorded" />
+          <EmptyState
+            compact
+            icon={<HeartIcon className="h-5 w-5" />}
+            title="No vitals recorded"
+            detail="Readings taken on the Vitals tab show up here."
+          />
         ) : (
           <dl className="space-y-2">
             <VitalRow
