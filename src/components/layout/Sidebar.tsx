@@ -11,7 +11,9 @@ import {
   Cog6ToothIcon,
   EllipsisHorizontalIcon,
   HomeIcon,
+  BeakerIcon,
   ShieldCheckIcon,
+  SparklesIcon,
   Squares2X2Icon,
   UserCircleIcon,
   UserGroupIcon,
@@ -65,6 +67,14 @@ const NAV: NavGroup[] = [
     ],
   },
   {
+    label: 'Assist',
+    items: [
+      // Every role may use the agents; each panel scopes itself to what that
+      // role is allowed to read, so there is no permission gate here.
+      { to: '/app/assistants', label: 'AI assistants', icon: SparklesIcon },
+    ],
+  },
+  {
     label: 'Operations',
     items: [
       { to: '/app/beds', label: 'Beds', icon: Squares2X2Icon, permissions: ['beds:view'] },
@@ -73,6 +83,12 @@ const NAV: NavGroup[] = [
         label: 'Scheduling',
         icon: CalendarDaysIcon,
         permissions: ['appointment:schedule'],
+      },
+      {
+        to: '/app/pharmacy',
+        label: 'Pharmacy',
+        icon: BeakerIcon,
+        permissions: ['prescription:view'],
       },
     ],
   },

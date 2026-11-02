@@ -13,6 +13,7 @@ import { FindDoctorPage } from '@/features/public/FindDoctorPage';
 import { VisitingPage } from '@/features/public/VisitingPage';
 import { BookAppointmentPage } from '@/features/public/BookAppointmentPage';
 import { PatientPortalPage } from '@/features/public/PatientPortalPage';
+import { AskAssistantPage } from '@/features/public/AskAssistantPage';
 
 import { LoginPage } from '@/features/auth/LoginPage';
 import { ProfilePage } from '@/features/auth/ProfilePage';
@@ -28,6 +29,8 @@ import { DischargePackagePage } from '@/features/discharge/DischargePackagePage'
 import { AnalyticsPage } from '@/features/analytics/AnalyticsPage';
 import { AuditLogPage } from '@/features/audit/AuditLogPage';
 import { SettingsPage } from '@/features/settings/SettingsPage';
+import { AiAssistantsPage } from '@/features/agents/AiAssistantsPage';
+import { PharmacyPage } from '@/features/pharmacy/PharmacyPage';
 import { DepartmentAdminPage } from '@/features/admin/DepartmentAdminPage';
 import { NotFoundPage } from '@/features/NotFoundPage';
 
@@ -100,6 +103,7 @@ export default function App() {
           <Route path="visiting" element={<VisitingPage />} />
           <Route path="book" element={<BookAppointmentPage />} />
           <Route path="portal" element={<PatientPortalPage />} />
+          <Route path="ask" element={<AskAssistantPage />} />
         </Route>
 
         <Route path="/login" element={<LoginPage />} />
@@ -150,6 +154,20 @@ export default function App() {
             }
           />
           <Route path="discharge/:id" element={<DischargePackagePage />} />
+          {/* The four independent specialist agents. Open to every signed-in
+              role: each panel scopes itself to what that role may read. */}
+          <Route path="assistants" element={<AiAssistantsPage />} />
+          {/* The in-house pharmacy counter. Clinical roles can watch the
+              queue; only pharmacy staff can act on it, which the page and
+              the API both enforce. */}
+          <Route
+            path="pharmacy"
+            element={
+              <RequirePermission permission="prescription:view">
+                <PharmacyPage />
+              </RequirePermission>
+            }
+          />
           <Route
             path="analytics"
             element={

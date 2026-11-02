@@ -25,12 +25,14 @@ const PUBLIC_NAV = [
   { to: '/', label: 'Home', end: true },
   { to: '/departments', label: 'Departments' },
   { to: '/doctors', label: 'Find a doctor' },
+  { to: '/ask', label: 'Ask us' },
   { to: '/visiting', label: 'Contact us' },
 ];
 
 const PATIENT_NAV = [
   { to: '/departments', label: 'Departments' },
   { to: '/portal', label: 'My Appointments', end: true },
+  { to: '/ask', label: 'Ask us' },
   { to: '/visiting', label: 'Contact us' },
 ];
 
@@ -281,6 +283,7 @@ export function PublicLayout() {
               { to: '/book', label: 'Book an appointment' },
               { to: '/portal', label: 'Patient portal' },
               { to: '/doctors', label: 'Find a doctor' },
+              { to: '/ask', label: 'Ask the hospital' },
               { to: '/visiting', label: 'Visiting hours' },
             ]}
           />

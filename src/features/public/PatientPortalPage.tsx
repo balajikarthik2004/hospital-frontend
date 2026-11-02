@@ -8,6 +8,7 @@ import {
   LockClosedIcon,
 } from '@heroicons/react/24/outline';
 import { Badge, Button, Callout, Field, Input, Logo, Spinner } from '@/components/common';
+import { PortalBookingAssistant } from './PortalBookingAssistant';
 import {
   errorMessage,
   portalSession,
@@ -160,6 +161,8 @@ export function PatientPortalPage() {
           ))}
         </ul>
       )}
+
+      <PortalBookingAssistant firstName={patient?.firstName} />
 
       {past.length > 0 && (
         <>
