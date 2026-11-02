@@ -89,8 +89,8 @@ export function VitalsTab({
             xKey="t"
             suffix=" mmHg"
             series={[
-              { key: 'systolic', label: 'Systolic', color: '#0891B2' },
-              { key: 'diastolic', label: 'Diastolic', color: '#A5B4FC' },
+              { key: 'systolic', label: 'Systolic', color: '#3C5E93' },
+              { key: 'diastolic', label: 'Diastolic', color: '#99B1D6' },
             ]}
           />
           <TrendChart
@@ -100,7 +100,7 @@ export function VitalsTab({
             xKey="t"
             series={[
               { key: 'heartRate', label: 'Heart rate', color: '#DC2626' },
-              { key: 'respiratoryRate', label: 'Respiratory rate', color: '#6366F1' },
+              { key: 'respiratoryRate', label: 'Respiratory rate', color: '#7B4FA8' },
             ]}
           />
           <TrendChart
@@ -119,7 +119,7 @@ export function VitalsTab({
             xKey="t"
             area
             suffix="%"
-            series={[{ key: 'oxygenSaturation', label: 'SpO₂', color: '#059669' }]}
+            series={[{ key: 'oxygenSaturation', label: 'SpO₂', color: '#1E7B6B' }]}
           />
         </div>
       )}

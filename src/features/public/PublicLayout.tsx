@@ -111,17 +111,20 @@ export function PublicLayout() {
           borderColor: 'var(--color-border)',
         }}
       >
-        <div className="mx-auto flex h-20 max-w-7xl items-center justify-between gap-6 px-6 sm:px-8 lg:px-12">
+        {/* On a phone everything here has to fit in 390px: the name may
+            shrink, and the booking button moves into the menu, where the
+            floating "Book" button covers it on every page anyway. */}
+        <div className="mx-auto flex h-16 max-w-7xl items-center justify-between gap-3 px-4 sm:h-20 sm:gap-6 sm:px-8 lg:px-12">
           <Link
             to={isLoggedIn ? '/portal' : '/'}
-            className="flex shrink-0 items-center gap-3.5 transition-opacity hover:opacity-95"
+            className="flex min-w-0 items-center gap-2.5 transition-opacity hover:opacity-95 sm:gap-3.5"
           >
-            <Logo size={36} />
-            <div className="flex flex-col justify-center shrink-0">
-              <span className="whitespace-nowrap text-[0.9375rem] sm:text-base font-bold leading-tight tracking-tight text-[var(--color-text)]">
+            <Logo size={32} className="shrink-0 sm:h-9 sm:w-9" />
+            <div className="flex min-w-0 flex-col justify-center">
+              <span className="truncate text-[0.875rem] font-bold leading-tight tracking-tight text-[var(--color-text)] sm:text-base">
                 Aarogya General Hospital
               </span>
-              <span className="eyebrow whitespace-nowrap text-[0.6875rem] font-medium tracking-wider text-[var(--color-text-muted)]">
+              <span className="eyebrow truncate text-[0.625rem] font-medium tracking-wider text-[var(--color-text-muted)] sm:text-[0.6875rem]">
                 Multi-speciality care
               </span>
             </div>
@@ -147,12 +150,12 @@ export function PublicLayout() {
             ))}
           </nav>
 
-          <div className="flex items-center gap-3 sm:gap-4 lg:gap-5 shrink-0">
+          <div className="flex shrink-0 items-center gap-1.5 sm:gap-4 lg:gap-5">
             <button
               type="button"
               onClick={toggle}
               aria-label={dark ? 'Switch to light theme' : 'Switch to dark theme'}
-              className="rounded-xl p-2.5 text-[var(--color-text-secondary)] transition-colors hover:bg-[var(--color-surface-muted)] shrink-0"
+              className="rounded-xl p-2 sm:p-2.5 text-[var(--color-text-secondary)] transition-colors hover:bg-[var(--color-surface-muted)] shrink-0"
             >
               {dark ? <SunIcon className="h-5 w-5" /> : <MoonIcon className="h-5 w-5" />}
             </button>
@@ -162,7 +165,7 @@ export function PublicLayout() {
                 to="/portal"
                 title={patient ? `${patient.firstName} ${patient.lastName ?? ''}`.trim() : 'Patient Portal'}
                 aria-label={patient ? `Profile: ${patient.firstName}` : 'Patient profile'}
-                className="flex h-10 w-10 items-center justify-center rounded-full bg-primary-700 text-white font-bold text-sm shadow-xs transition-transform hover:scale-105 hover:bg-primary-800 focus:outline-none focus:ring-2 focus:ring-primary-600 focus:ring-offset-2 shrink-0 uppercase cursor-pointer"
+                className="flex h-9 w-9 items-center justify-center rounded-full bg-primary-700 sm:h-10 sm:w-10 text-white font-bold text-sm shadow-xs transition-transform hover:scale-105 hover:bg-primary-800 focus:outline-none focus:ring-2 focus:ring-primary-600 focus:ring-offset-2 shrink-0 uppercase cursor-pointer"
               >
                 {patient?.firstName ? patient.firstName[0] : 'C'}
               </Link>
@@ -178,7 +181,7 @@ export function PublicLayout() {
 
             <Link
               to="/book"
-              className="whitespace-nowrap shrink-0 rounded-xl bg-primary-700 px-4 py-2.5 text-[0.8125rem] font-semibold text-white shadow-xs transition-colors duration-150 hover:bg-primary-600 focus:outline-none focus:ring-2 focus:ring-primary-600 focus:ring-offset-2"
+              className="hidden sm:inline-flex whitespace-nowrap shrink-0 rounded-xl bg-primary-700 px-4 py-2.5 text-[0.8125rem] font-semibold text-white shadow-xs transition-colors duration-150 hover:bg-primary-600 focus:outline-none focus:ring-2 focus:ring-primary-600 focus:ring-offset-2"
             >
               Book appointment
             </Link>
@@ -197,7 +200,7 @@ export function PublicLayout() {
 
         {menuOpen && (
           <nav
-            className="border-t px-6 py-4 lg:hidden flex flex-col gap-2 bg-[var(--color-surface)] shadow-lg"
+            className="border-t px-4 py-4 sm:px-6 lg:hidden flex flex-col gap-2 bg-[var(--color-surface)] shadow-lg"
             style={{ borderColor: 'var(--color-border)' }}
             aria-label="Mobile Navigation"
           >
@@ -220,6 +223,12 @@ export function PublicLayout() {
             ))}
 
             <div className="pt-3 mt-1 border-t flex flex-col gap-2.5" style={{ borderColor: 'var(--color-border)' }}>
+              <Link
+                to="/book"
+                className="rounded-xl bg-primary-700 px-4 py-3 text-center text-[0.9375rem] font-semibold text-white shadow-xs transition-colors hover:bg-primary-600 sm:hidden"
+              >
+                Book appointment
+              </Link>
               <Link
                 to="/portal"
                 className="flex items-center justify-between rounded-xl px-4 py-2.5 text-[0.9375rem] font-medium border border-[var(--color-border)] hover:bg-[var(--color-surface-muted)]"
@@ -250,7 +259,9 @@ export function PublicLayout() {
         )}
       </header>
 
-      <main className="flex-1">
+      {/* Room under the last section on a phone, so the floating booking
+          button never sits on top of it. */}
+      <main className="flex-1 pb-20 sm:pb-0">
         <Outlet />
       </main>
 

@@ -22,7 +22,7 @@ import {
 import { useApi } from '@/hooks/useApi';
 import { useSocketEvent } from '@/hooks/useSocket';
 import { useAuthStore } from '@/store/authStore';
-import { cn, fmtDate, fmtDayLabel, patientName, titleCase } from '@/lib/utils';
+import { cn, fmtDate, fmtDayLabel, localDateKey, patientName, titleCase } from '@/lib/utils';
 import type { Appointment, Patient, User } from '@/types';
 import { AppointmentModal } from './AppointmentModal';
 
@@ -211,13 +211,18 @@ export function SchedulingPage() {
   );
 }
 
+// The agent identity colours from tailwind.config.ts, so the calendar speaks
+// the same palette as the rest of the product instead of stock Tailwind hues.
 const TYPE_COLOR: Record<string, string> = {
-  follow_up: '#0891B2',
-  specialist: '#6366F1',
-  lab_only: '#059669',
-  telehealth: '#7C3AED',
-  pre_admission: '#D97706',
+  follow_up: '#157A6B',
+  specialist: '#3C5E93',
+  lab_only: '#2A7F4C',
+  telehealth: '#7B4FA8',
+  pre_admission: '#99650D',
 };
+
+/** How many chips an hour cell shows before collapsing the rest into "+N". */
+const MAX_CHIPS = 3;
 
 function WeekGrid({
   days,
@@ -230,7 +235,7 @@ function WeekGrid({
 }) {
   const byDay = new Map<string, Appointment[]>();
   for (const a of appointments) {
-    const key = new Date(a.scheduledDate).toISOString().slice(0, 10);
+    const key = localDateKey(a.scheduledDate);
     byDay.set(key, [...(byDay.get(key) ?? []), a]);
   }
 
@@ -281,27 +286,45 @@ function WeekGrid({
               {String(hour).padStart(2, '0')}:00
             </div>
             {days.map((day) => {
-              const key = day.toISOString().slice(0, 10);
-              const slot = (byDay.get(key) ?? []).filter(
-                (a) => Number(a.scheduledTime.split(':')[0]) === hour
-              );
+              const key = localDateKey(day);
+              const isToday = key === localDateKey();
+              const slot = (byDay.get(key) ?? [])
+                .filter((a) => Number(a.scheduledTime.split(':')[0]) === hour)
+                .sort((a, b) => a.scheduledTime.localeCompare(b.scheduledTime));
+              const hidden = slot.length - MAX_CHIPS;
               return (
                 <button
                   key={`${key}-${hour}`}
                   onClick={() => onSlotClick(key, `${String(hour).padStart(2, '0')}:00`)}
-                  className="min-h-[52px] space-y-0.5 border-l p-1 text-left transition-colors hover:bg-[var(--color-surface-muted)]"
+                  className={cn(
+                    'group flex min-h-[56px] flex-col items-stretch justify-start gap-1 border-l p-1.5 text-left transition-colors hover:bg-[var(--color-surface-muted)]',
+                    isToday && 'bg-primary-50/40 dark:bg-primary-950/20'
+                  )}
                   style={{ borderColor: 'var(--color-border)' }}
                 >
-                  {slot.map((a) => (
-                    <span
-                      key={a._id}
-                      className="block truncate rounded px-1.5 py-0.5 text-[10px] font-medium text-white"
-                      style={{ background: TYPE_COLOR[a.type] ?? '#64748B' }}
-                      title={`${a.scheduledTime} ${patientName(a.patientId as Patient)} — ${a.specialty || titleCase(a.type)}`}
-                    >
-                      {a.scheduledTime} {patientName(a.patientId as Patient).split(' ')[1]}
+                  {slot.slice(0, hidden > 0 ? MAX_CHIPS - 1 : MAX_CHIPS).map((a) => {
+                    const color = TYPE_COLOR[a.type] ?? '#78746C';
+                    return (
+                      <span
+                        key={a._id}
+                        className="block truncate rounded-md border-l-[3px] px-2 py-1 leading-tight shadow-xs transition-transform group-hover:translate-x-px"
+                        style={{ borderLeftColor: color, background: `${color}14` }}
+                        title={`${a.scheduledTime} ${patientName(a.patientId as Patient)} — ${a.specialty || titleCase(a.type)}`}
+                      >
+                        <span className="block truncate text-[11px] font-semibold text-[var(--color-text)]">
+                          {patientName(a.patientId as Patient)}
+                        </span>
+                        <span className="block truncate text-[10px]" style={{ color }}>
+                          {a.scheduledTime} · {titleCase(a.type)}
+                        </span>
+                      </span>
+                    );
+                  })}
+                  {hidden > 0 && (
+                    <span className="px-2 text-[10px] font-medium text-muted">
+                      +{hidden + 1} more
                     </span>
-                  ))}
+                  )}
                 </button>
               );
             })}
@@ -321,7 +344,7 @@ function DayColumn({
   appointments: Appointment[];
   onSlotClick: (date: string, time: string) => void;
 }) {
-  const key = date.toISOString().slice(0, 10);
+  const key = localDateKey(date);
   const slots: string[] = [];
   for (let h = 9; h < 17; h++) {
     slots.push(`${String(h).padStart(2, '0')}:00`, `${String(h).padStart(2, '0')}:30`);
@@ -353,7 +376,7 @@ function DayColumn({
                       key={a._id}
                       className="rounded-lg border-l-4 px-3 py-2"
                       style={{
-                        borderLeftColor: TYPE_COLOR[a.type] ?? '#64748B',
+                        borderLeftColor: TYPE_COLOR[a.type] ?? '#78746C',
                         background: 'var(--color-surface-muted)',
                       }}
                     >

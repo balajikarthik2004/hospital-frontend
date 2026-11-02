@@ -236,7 +236,7 @@ function PatientSearch() {
         }}
         onFocus={() => setOpen(true)}
         onBlur={() => setTimeout(() => setOpen(false), 150)}
-        placeholder="Quick search patients (name, ID, diagnosis)..."
+        placeholder="Search patients…"
         className="h-9.5 w-full rounded-lg border bg-[var(--color-surface-muted)] pl-10 pr-12 text-[0.8125rem] transition-[border-color,box-shadow,background-color] duration-150 placeholder:text-[var(--color-text-tertiary)] focus:border-primary-600 focus:bg-[var(--color-surface)] focus:outline-none focus:ring-[3px] focus:ring-primary-700/15"
         style={{ borderColor: 'var(--color-border)' }}
         aria-label="Search patients by name, ID or phone"
