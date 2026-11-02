@@ -28,7 +28,10 @@ export type Permission =
   | 'users:manage'
   | 'beds:manage'
   | 'beds:view'
-  | 'catalogue:manage';
+  | 'catalogue:manage'
+  | 'prescription:write'
+  | 'prescription:dispense'
+  | 'prescription:view';
 
 export interface User {
   id: string;

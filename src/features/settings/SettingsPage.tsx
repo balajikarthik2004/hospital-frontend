@@ -653,10 +653,17 @@ function AddBedModal({
 function AgentsPanel() {
   const { data, loading } = useApi<{
     engine: string;
-    pythonService: { url: string; online: boolean };
+    multiAgentService: { url: string; healthEndpoint: string; note: string };
     llm: { configured: boolean; model: string | null; note: string };
     agents: { name: string; key: string; type: string; color: string }[];
   }>('/agents/health');
+
+  // The specialist agents are a separate service, so its health is a separate
+  // question from whether the discharge pipeline is running.
+  const { data: multiAgent } = useApi<{
+    online: boolean;
+    service: { url: string; databaseConnected: boolean | null };
+  }>('/multi-agent/health');
 
   if (loading && !data) return <LoadingPane label="Checking the agent service" />;
 
@@ -665,27 +672,36 @@ function AgentsPanel() {
       <Card>
         <CardHeader
           title="Orchestration engine"
-          subtitle="Which service is actually running the discharge DAG"
+          subtitle="What runs the discharge DAG, and where the specialist agents live"
           accent="var(--agent-orchestrator)"
         />
         <dl className="grid gap-4 sm:grid-cols-3">
           <div>
-            <dt className="text-xs uppercase tracking-wide text-faint">Engine</dt>
+            <dt className="text-xs uppercase tracking-wide text-faint">Discharge DAG</dt>
             <dd className="mt-1">
-              <Badge tone={data?.engine === 'python-langgraph' ? 'success' : 'info'}>
-                {data?.engine === 'python-langgraph'
-                  ? 'Python LangGraph service'
-                  : 'Built-in TypeScript orchestrator'}
-              </Badge>
+              <Badge tone="info">Built-in TypeScript orchestrator</Badge>
             </dd>
           </div>
           <div>
-            <dt className="text-xs uppercase tracking-wide text-faint">Python service</dt>
+            <dt className="text-xs uppercase tracking-wide text-faint">Specialist agents</dt>
             <dd className="mt-1 flex items-center gap-2">
-              <Badge tone={data?.pythonService.online ? 'success' : 'neutral'} dot>
-                {data?.pythonService.online ? 'Online' : 'Not running'}
+              <Badge
+                tone={
+                  multiAgent?.online && multiAgent.service.databaseConnected !== false
+                    ? 'success'
+                    : 'neutral'
+                }
+                dot
+              >
+                {multiAgent?.online
+                  ? multiAgent.service.databaseConnected === false
+                    ? 'No database'
+                    : 'Online'
+                  : 'Not running'}
               </Badge>
-              <span className="font-mono text-[11px] text-faint">{data?.pythonService.url}</span>
+              <span className="font-mono text-[11px] text-faint">
+                {data?.multiAgentService.url}
+              </span>
             </dd>
           </div>
           <div>

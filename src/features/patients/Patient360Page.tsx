@@ -35,6 +35,7 @@ import { NotesTab } from './tabs/NotesTab';
 import { OverviewTab } from './tabs/OverviewTab';
 import { StatusPill } from '@/features/discharge/StatusPill';
 import { InitiateDischargeModal } from '@/features/discharge/InitiateDischargeModal';
+import { PrescribeModal } from '@/features/pharmacy/PrescribeModal';
 
 type TabKey =
   | 'overview'
@@ -62,6 +63,7 @@ export function Patient360Page() {
   const can = useAuthStore((s) => s.can);
   const [tab, setTab] = useState<TabKey>('overview');
   const [initiating, setInitiating] = useState(false);
+  const [prescribing, setPrescribing] = useState(false);
 
   const { data, loading, error, refetch } = useApi<PatientBundle>(id ? `/patients/${id}` : null);
 
@@ -149,6 +151,13 @@ export function Patient360Page() {
           </div>
 
           <div className="flex shrink-0 flex-wrap items-center gap-2">
+            {/* A prescription does not need an admission — outpatients are
+                prescribed for too, so this is not gated on one. */}
+            {can('prescription:write') && (
+              <Button variant="outline" onClick={() => setPrescribing(true)}>
+                Prescribe
+              </Button>
+            )}
             {can('discharge:initiate') && activeAdmission && !activePackage && (
               <Button onClick={() => setInitiating(true)}>Initiate discharge</Button>
             )}
@@ -357,6 +366,14 @@ export function Patient360Page() {
         onClose={() => setInitiating(false)}
         admissionId={activeAdmission?._id}
         onCreated={(pkgId) => navigate(`/app/discharge/${pkgId}`)}
+      />
+
+      <PrescribeModal
+        open={prescribing}
+        onClose={() => setPrescribing(false)}
+        patientId={patient._id}
+        patientName={patientName(patient)}
+        admissionId={activeAdmission?._id ?? null}
       />
     </>
   );
