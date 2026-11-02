@@ -366,6 +366,21 @@
     color: var(--color-chrome-text-muted);
   }
 
+  /* A popover anchored in the rail is painted on the page surface, not on
+     the rail, so it has to opt back out of the chrome's ink ramp. Without
+     this the account menu's labels inherit the near-white rail text and
+     disappear against the white panel. */
+  .chrome .chrome-popover {
+    color: var(--color-text);
+  }
+  .chrome .chrome-popover .text-muted {
+    color: var(--color-text-secondary);
+  }
+  .chrome .chrome-popover .text-faint,
+  .chrome .chrome-popover .eyebrow {
+    color: var(--color-text-tertiary);
+  }
+
   /* A small all-caps kicker that introduces a block of content. */
   .eyebrow {
     font-size: 0.6875rem;

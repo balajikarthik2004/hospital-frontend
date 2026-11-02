@@ -17,6 +17,7 @@ import {
   type PortalAppointment,
   type PortalPatient,
 } from '@/lib/publicApi';
+import { PortalAssistant } from './PortalAssistant';
 
 /**
  * The patient's own dashboard.
@@ -132,7 +133,13 @@ export function PatientPortalPage() {
         </Callout>
       )}
 
-      <div className="mt-8 flex flex-wrap items-center justify-between gap-3">
+      {/* Above the list rather than below it: booking is what most people
+          come here to do, and the agent can do it without a form. */}
+      <div className="mt-8">
+        <PortalAssistant onBooked={() => void load()} />
+      </div>
+
+      <div className="mt-10 flex flex-wrap items-center justify-between gap-3">
         <h2 className="text-[1.125rem]">Upcoming appointments</h2>
         <Link to="/book">
           <Button>Book another</Button>
@@ -173,8 +180,8 @@ export function PatientPortalPage() {
       )}
 
       <p className="mt-10 text-[0.8125rem] leading-relaxed text-faint">
-        This portal shows your appointments only. For test results, prescriptions or your
-        discharge summary, speak to your doctor or call the hospital on{' '}
+        This portal shows your appointments and your take-home medicines. For test results or
+        your full discharge summary, speak to your doctor or call the hospital on{' '}
         <a href="tel:+914440001200" className="font-medium underline">
           +91 44 4000 1200
         </a>

@@ -23,6 +23,7 @@ import { Patient360Page } from '@/features/patients/Patient360Page';
 import { AdmissionsPage } from '@/features/admissions/AdmissionsPage';
 import { BedMapPage } from '@/features/admissions/BedMapPage';
 import { SchedulingPage } from '@/features/scheduling/SchedulingPage';
+import { AssistantPage } from '@/features/assistant/AssistantPage';
 import { DischargeQueuePage } from '@/features/discharge/DischargeQueuePage';
 import { DischargePackagePage } from '@/features/discharge/DischargePackagePage';
 import { AnalyticsPage } from '@/features/analytics/AnalyticsPage';
@@ -150,6 +151,14 @@ export default function App() {
             }
           />
           <Route path="discharge/:id" element={<DischargePackagePage />} />
+          <Route
+            path="assistant"
+            element={
+              <RequirePermission permission="patient:view:any">
+                <AssistantPage />
+              </RequirePermission>
+            }
+          />
           <Route
             path="analytics"
             element={

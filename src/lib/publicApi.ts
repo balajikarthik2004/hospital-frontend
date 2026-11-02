@@ -227,3 +227,75 @@ export interface AgentReply {
 
 export const doctorName = (d: Pick<PublicDoctor, 'firstName' | 'lastName'>) =>
   `Dr ${d.firstName} ${d.lastName}`.trim();
+
+/* ── The specialist agents ────────────────────────────────────────────────
+   The general hospital assistant is open to anyone; the appointment and
+   medication agents need a portal session, and are scoped to it by the token
+   alone — no patient id travels on the wire, so there is nothing to tamper
+   with. Mirrors MultiAgents/schemas. */
+
+export interface HospitalAnswer {
+  question: string;
+  status: string;
+  answer: string;
+  sources: string[];
+  session_id?: string | null;
+  error?: string | null;
+}
+
+export interface PortalAppointmentTurn {
+  session_id: string;
+  response: string;
+  status: string;
+  error?: string | null;
+}
+
+export interface PortalMedication {
+  medicationRecordId: string;
+  drugName: string;
+  dosage: string;
+  frequency: string;
+  route: string;
+}
+
+export interface PortalMedicationExplanation {
+  medication_record_id: string;
+  status: string;
+  record: {
+    medication_name?: string;
+    strength?: string;
+    route?: string;
+    dose_instructions?: string;
+  } | null;
+  explanation: string;
+  error?: string | null;
+}
+
+export const assistantPublicApi = {
+  /** Open to visitors. No chart is ever in scope. */
+  ask: (question: string, sessionId?: string | null) =>
+    publicApi
+      .post<HospitalAnswer>('/assistant/ask', { question, sessionId: sessionId ?? null })
+      .then((r) => r.data),
+
+  appointmentTurn: (message: string, sessionId?: string | null) =>
+    publicApi
+      .post<PortalAppointmentTurn>('/portal/assistant/appointments', {
+        message,
+        sessionId: sessionId ?? null,
+      })
+      .then((r) => r.data),
+
+  medications: () =>
+    publicApi
+      .get<{ medications: PortalMedication[] }>('/portal/assistant/medications')
+      .then((r) => r.data.medications),
+
+  explainMedication: (medicationRecordId: string, sessionId?: string | null) =>
+    publicApi
+      .post<PortalMedicationExplanation>('/portal/assistant/medications', {
+        medicationRecordId,
+        sessionId: sessionId ?? null,
+      })
+      .then((r) => r.data),
+};

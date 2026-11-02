@@ -9,6 +9,7 @@ import {
 import { Callout } from '@/components/common';
 import { useApi } from '@/hooks/useApi';
 import { publicApi, type HospitalInfo } from '@/lib/publicApi';
+import { HospitalAssistant } from './HospitalAssistant';
 
 export function VisitingPage() {
   const { data } = useApi<HospitalInfo>('/hospital', [], { client: publicApi });
@@ -107,6 +108,12 @@ export function VisitingPage() {
           </li>
         ))}
       </ul>
+
+      {/* Whatever this page did not think to list, asked in the visitor's own
+          words and answered from the same records the rest of the site shows. */}
+      <div className="mt-12">
+        <HospitalAssistant />
+      </div>
     </div>
   );
 }

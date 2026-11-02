@@ -12,6 +12,7 @@ import {
   EllipsisHorizontalIcon,
   HomeIcon,
   ShieldCheckIcon,
+  SparklesIcon,
   Squares2X2Icon,
   UserCircleIcon,
   UserGroupIcon,
@@ -73,6 +74,17 @@ const NAV: NavGroup[] = [
         label: 'Scheduling',
         icon: CalendarDaysIcon,
         permissions: ['appointment:schedule'],
+      },
+    ],
+  },
+  {
+    label: 'Assistance',
+    items: [
+      {
+        to: '/app/assistant',
+        label: 'AI assistants',
+        icon: SparklesIcon,
+        permissions: ['patient:view:any'],
       },
     ],
   },
@@ -239,7 +251,7 @@ export function Sidebar({
             enterFrom="opacity-0 translate-y-1"
             enterTo="opacity-100 translate-y-0"
           >
-            <Menu.Items className="absolute bottom-full left-0 right-0 mb-2 overflow-hidden rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] shadow-lg focus:outline-none">
+            <Menu.Items className="chrome-popover absolute bottom-full left-0 right-0 mb-2 overflow-hidden rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] shadow-lg focus:outline-none">
               <Menu.Item>
                 {({ active }) => (
                   <NavLink
